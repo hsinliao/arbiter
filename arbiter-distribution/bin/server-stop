@@ -1,0 +1,37 @@
+#!/usr/bin/env sh
+# Arbiter server launcher: delegate the stop protocol to the Java 8 stop launcher.
+set -eu
+
+ARBITER_TOOL=server-stop
+
+# Resolve the real script path so a symlinked launcher still finds its root.
+SELF=$0
+if command -v readlink >/dev/null 2>&1; then
+  while [ -h "$SELF" ]; do
+    SELF_DIR=$(CDPATH= cd -- "$(dirname -- "$SELF")" && pwd)
+    LINK=$(readlink "$SELF")
+    case $LINK in
+      /*) SELF=$LINK ;;
+      *) SELF=$SELF_DIR/$LINK ;;
+    esac
+  done
+fi
+SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$SELF")" && pwd)
+
+if [ ! -f "$SCRIPT_DIR/_arbiter-common.sh" ]; then
+  echo "server-stop: missing launcher support file: $SCRIPT_DIR/_arbiter-common.sh" >&2
+  exit 2
+fi
+. "$SCRIPT_DIR/_arbiter-common.sh"
+
+arbiter_resolve_home
+STOP_JAR=$ARBITER_HOME/lib/bootstrap/arbiter-control.jar
+arbiter_require_file "$STOP_JAR"
+
+# The stop launcher is compiled for Java 8, so stopping does not require the
+# Java 17 server runtime.
+arbiter_find_java "${ARBITER_SERVER_JAVA:-}"
+
+set -f
+exec "$JAVA_EXE" -Darbiter.home="$ARBITER_HOME" \
+  -cp "$STOP_JAR" io.github.arbiter.server.control.ServerControl --stop

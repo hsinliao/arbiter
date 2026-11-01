@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>用户管理 - Arbiter Console</title>
+    <link rel="stylesheet" href="/assets/console.css">
+</head>
+<body>
+<div class="shell">
+    <aside class="sidebar">
+        <div class="brand">Arbiter</div>
+        <a class="nav-link" data-nav="home" href="/home.html">首页</a>
+        <div data-admin-only>
+            <div class="nav-group">系统管理</div>
+            <a class="nav-link" data-nav="users" href="/system/users.html">用户管理</a>
+        </div>
+        <div class="sidebar-footer">
+            <button type="button" data-logout>退出登录</button>
+        </div>
+    </aside>
+
+    <div class="content">
+        <header class="topbar">
+            <h1>用户管理</h1>
+            <div class="topbar-user">
+                <span data-user-name></span>
+                <span class="muted"> / </span>
+                <span data-user-scope></span>
+            </div>
+        </header>
+
+        <main class="page">
+            <p class="alert error" id="usersError" role="alert" hidden></p>
+
+            <div class="toolbar">
+                <p class="muted" id="userCount">正在加载...</p>
+                <button class="button" type="button" id="createUser">新增用户</button>
+            </div>
+
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>用户名</th>
+                        <th>角色</th>
+                        <th>状态</th>
+                        <th>操作</th>
+                    </tr>
+                    </thead>
+                    <tbody id="userRows"></tbody>
+                </table>
+                <div class="empty" id="emptyUsers" hidden>暂无用户</div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<dialog id="userDialog">
+    <form class="dialog-body" id="userForm">
+        <h2 id="userDialogTitle">新增用户</h2>
+        <p class="alert error" id="userDialogError" role="alert" hidden></p>
+
+        <div class="field">
+            <label for="userUsername">用户名</label>
+            <input id="userUsername" autocomplete="off" required
+                   pattern="[A-Za-z0-9._-]{1,100}">
+        </div>
+        <div class="field">
+            <label for="userPassword">密码</label>
+            <input id="userPassword" type="password" autocomplete="new-password">
+            <span class="muted" id="passwordHint">新增用户时必填。</span>
+        </div>
+        <div class="field">
+            <label for="userScope">角色</label>
+            <input id="userScope" list="scopeOptions" value="reader" required>
+            <datalist id="scopeOptions">
+                <option value="reader"></option>
+                <option value="admin"></option>
+            </datalist>
+        </div>
+        <label class="checkbox">
+            <input id="userEnabled" type="checkbox" checked>
+            启用账户
+        </label>
+
+        <div class="dialog-actions">
+            <button class="button secondary" type="button" id="cancelUser">取消</button>
+            <button class="button" type="submit" id="saveUser">保存</button>
+        </div>
+    </form>
+</dialog>
+
+<script src="/assets/console.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        ArbiterConsole.initShell('users', true);
+
+        const error = document.getElementById('usersError');
+        const rows = document.getElementById('userRows');
+        const empty = document.getElementById('emptyUsers');
+        const count = document.getElementById('userCount');
+        const dialog = document.getElementById('userDialog');
+        const form = document.getElementById('userForm');
+        const dialogTitle = document.getElementById('userDialogTitle');
+        const dialogError = document.getElementById('userDialogError');
+        const username = document.getElementById('userUsername');
+        const password = document.getElementById('userPassword');
+        const scope = document.getElementById('userScope');
+        const enabled = document.getElementById('userEnabled');
+        const passwordHint = document.getElementById('passwordHint');
+        let editing = null;
+
+        function clearError() {
+            error.hidden = true;
+            dialogError.hidden = true;
+        }
+
+        function openCreate() {
+            editing = null;
+            clearError();
+            dialogTitle.textContent = '新增用户';
+            username.value = '';
+            username.disabled = false;
+            password.value = '';
+            scope.value = 'reader';
+            enabled.checked = true;
+            passwordHint.textContent = '新增用户时必填。';
+            dialog.showModal();
+            username.focus();
+        }
+
+        function openEdit(user) {
+            editing = user.username;
+            clearError();
+            dialogTitle.textContent = '编辑用户';
+            username.value = user.username;
+            username.disabled = true;
+            password.value = '';
+            scope.value = user.scope;
+            enabled.checked = user.enabled;
+            passwordHint.textContent = '留空表示不修改密码。';
+            dialog.showModal();
+            password.focus();
+        }
+
+        async function loadUsers() {
+            try {
+                const result = await ArbiterConsole.api('GET', '/users');
+                rows.replaceChildren();
+                const users = result.users || [];
+                users.forEach(user => rows.appendChild(userRow(user)));
+                empty.hidden = users.length !== 0;
+                count.textContent = `共 ${users.length} 个用户`;
+                clearError();
+            } catch (failure) {
+                ArbiterConsole.showError(error, failure);
+            }
+        }
+
+        function userRow(user) {
+            const tr = document.createElement('tr');
+
+            const name = document.createElement('td');
+            name.textContent = user.username;
+            tr.appendChild(name);
+
+            const role = document.createElement('td');
+            const roleBadge = document.createElement('span');
+            roleBadge.className = 'badge';
+            roleBadge.textContent = user.scope;
+            role.appendChild(roleBadge);
+            tr.appendChild(role);
+
+            const state = document.createElement('td');
+            const stateBadge = document.createElement('span');
+            stateBadge.className = 'badge ' + (user.enabled ? 'ok' : 'off');
+            stateBadge.textContent = user.enabled ? '启用' : '禁用';
+            state.appendChild(stateBadge);
+            tr.appendChild(state);
+
+            const actions = document.createElement('td');
+            actions.className = 'actions';
+            const edit = document.createElement('button');
+            edit.className = 'button secondary small';
+            edit.type = 'button';
+            edit.textContent = '编辑';
+            edit.addEventListener('click', () => openEdit(user));
+            actions.appendChild(edit);
+
+            const remove = document.createElement('button');
+            remove.className = 'button danger small';
+            remove.type = 'button';
+            remove.textContent = '删除';
+            remove.addEventListener('click', () => deleteUser(user.username));
+            actions.appendChild(remove);
+            tr.appendChild(actions);
+            return tr;
+        }
+
+        async function deleteUser(name) {
+            if (!confirm(`确定删除用户 ${name}？`)) {
+                return;
+            }
+            try {
+                await ArbiterConsole.api('DELETE', `/users/${encodeURIComponent(name)}`);
+                await loadUsers();
+            } catch (failure) {
+                ArbiterConsole.showError(error, failure);
+            }
+        }
+
+        document.getElementById('createUser').addEventListener('click', openCreate);
+        document.getElementById('cancelUser').addEventListener('click', () => dialog.close());
+
+        form.addEventListener('submit', async event => {
+            event.preventDefault();
+            dialogError.hidden = true;
+            const save = document.getElementById('saveUser');
+            save.disabled = true;
+            try {
+                if (editing === null) {
+                    await ArbiterConsole.api('POST', '/users', {
+                        username: username.value.trim(),
+                        password: password.value,
+                        scope: scope.value.trim(),
+                        enabled: enabled.checked
+                    });
+                } else {
+                    const body = {
+                        scope: scope.value.trim(),
+                        enabled: enabled.checked
+                    };
+                    if (password.value) {
+                        body.password = password.value;
+                    }
+                    await ArbiterConsole.api('PUT',
+                        `/users/${encodeURIComponent(editing)}`, body);
+                }
+                dialog.close();
+                await loadUsers();
+            } catch (failure) {
+                ArbiterConsole.showError(dialogError, failure);
+            } finally {
+                save.disabled = false;
+            }
+        });
+
+        loadUsers();
+    });
+</script>
+</body>
+</html>

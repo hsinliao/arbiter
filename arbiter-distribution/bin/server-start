@@ -1,0 +1,144 @@
+#!/usr/bin/env sh
+# Arbiter server launcher: background start with a fixed run directory.
+set -eu
+
+ARBITER_TOOL=server-start
+
+# Resolve the real script path so a symlinked launcher still finds its root.
+SELF=$0
+if command -v readlink >/dev/null 2>&1; then
+  while [ -h "$SELF" ]; do
+    SELF_DIR=$(CDPATH= cd -- "$(dirname -- "$SELF")" && pwd)
+    LINK=$(readlink "$SELF")
+    case $LINK in
+      /*) SELF=$LINK ;;
+      *) SELF=$SELF_DIR/$LINK ;;
+    esac
+  done
+fi
+SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$SELF")" && pwd)
+
+if [ ! -f "$SCRIPT_DIR/_arbiter-common.sh" ]; then
+  echo "server-start: missing launcher support file: $SCRIPT_DIR/_arbiter-common.sh" >&2
+  exit 2
+fi
+. "$SCRIPT_DIR/_arbiter-common.sh"
+
+arbiter_resolve_home
+
+SERVER_JAR=$ARBITER_HOME/lib/bootstrap/arbiter-console.jar
+CONTROL_JAR=$ARBITER_HOME/lib/bootstrap/arbiter-control.jar
+arbiter_require_file "$CONTROL_JAR"
+
+LOG_DIR=$ARBITER_HOME/logs
+LOG_FILE=$LOG_DIR/console.log
+LOG_OUT=$LOG_DIR/console.out
+mkdir -p "$LOG_DIR"
+
+arbiter_select_java "${ARBITER_SERVER_JAVA:-}"
+
+ARBITER_CONTROL_CLASSPATH="$CONTROL_JAR"
+ARBITER_CLASSPATH="$ARBITER_HOME/conf:$CONTROL_JAR:$SERVER_JAR:$ARBITER_HOME/lib/*:$ARBITER_HOME/lib/3rd/*"
+for dir in tools plugins; do
+  if [ -d "$ARBITER_HOME/$dir" ]; then
+    ARBITER_CLASSPATH="$ARBITER_CLASSPATH:$ARBITER_HOME/$dir/*:$ARBITER_HOME/$dir"
+  fi
+done
+
+# --debug may only be the first argument; the CLI always sends it first.
+# Accepted forms: --debug, --debug=ADDRESS:PORT, --debug ADDRESS:PORT.
+DEBUG=
+DEBUG_ADDRESS=127.0.0.1:5005
+case ${1:-} in
+  --debug)
+    DEBUG=1
+    shift
+    case ${1:-} in
+      ''|-*) ;;
+      *) DEBUG_ADDRESS=$1; shift ;;
+    esac
+    ;;
+  --debug=*)
+    DEBUG=1
+    DEBUG_ADDRESS=${1#--debug=}
+    shift
+    ;;
+esac
+DEBUG_OPTS=
+if [ -n "$DEBUG" ]; then
+  case $DEBUG_ADDRESS in
+    *:*) ;;
+    *) arbiter_fail "--debug requires ADDRESS:PORT" ;;
+  esac
+  DEBUG_OPTS="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=$DEBUG_ADDRESS"
+fi
+
+if arbiter_has_flag "$@"; then
+  exec "$JAVA_EXE" -Darbiter.home="$ARBITER_HOME" \
+    -cp "$ARBITER_CONTROL_CLASSPATH" \
+    io.github.arbiter.server.control.ServerControl "$@"
+fi
+
+arbiter_require_file "$SERVER_JAR"
+arbiter_require_file "$ARBITER_HOME/lib/arbiter-api.jar"
+arbiter_require_file "$ARBITER_HOME/conf/logback.xml"
+
+START_TIMEOUT=${ARBITER_SERVER_START_TIMEOUT:-10}
+case $START_TIMEOUT in
+  ''|*[!0-9]*)
+    arbiter_fail "ARBITER_SERVER_START_TIMEOUT must be a positive integer"
+    ;;
+esac
+if [ "$START_TIMEOUT" -lt 1 ]; then
+  arbiter_fail "ARBITER_SERVER_START_TIMEOUT must be a positive integer"
+fi
+
+if "$JAVA_EXE" -Darbiter.home="$ARBITER_HOME" \
+    -cp "$ARBITER_CONTROL_CLASSPATH" \
+    io.github.arbiter.server.control.ServerControl --check \
+    >/dev/null 2>&1; then
+  echo "server-start: already running" >&2
+  exit 0
+fi
+
+set -f
+nohup "$JAVA_EXE" $DEBUG_OPTS ${ARBITER_SERVER_JAVA_OPTS:-} \
+  -Darbiter.home="$ARBITER_HOME" \
+  -cp "$ARBITER_CLASSPATH" \
+  io.github.arbiter.server.ArbiterServerApplication "$@" \
+  >> "$LOG_OUT" 2>&1 &
+SERVER_PID=$!
+set +f
+
+attempt=0
+STARTED_PID=
+while [ "$attempt" -lt "$START_TIMEOUT" ]; do
+  CHECK=$("$JAVA_EXE" -Darbiter.home="$ARBITER_HOME" \
+    -cp "$ARBITER_CONTROL_CLASSPATH" \
+    io.github.arbiter.server.control.ServerControl --check \
+    2>/dev/null || true)
+  case $CHECK in
+    RUNNING*)
+      STARTED_PID=${CHECK#RUNNING}
+      STARTED_PID=${STARTED_PID# }
+      break
+      ;;
+  esac
+  if ! kill -0 "$SERVER_PID" 2>/dev/null; then
+    echo "server-start: server exited during startup; see $LOG_FILE" >&2
+    exit 1
+  fi
+  sleep 1
+  attempt=$((attempt + 1))
+done
+
+if [ -z "$STARTED_PID" ]; then
+  echo "server-start: server did not start; see $LOG_FILE" >&2
+  exit 1
+fi
+
+echo "arbiter-server started (PID $STARTED_PID)"
+if [ -n "$DEBUG" ]; then
+  echo "Debug agent: $DEBUG_ADDRESS (JDWP, suspend=n)"
+fi
+echo "Log file: $LOG_FILE"
