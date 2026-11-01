@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>首页 - Arbiter Console</title>
+    <link rel="stylesheet" href="/assets/console.css">
+</head>
+<body>
+<div class="shell">
+    <aside class="sidebar">
+        <div class="brand">Arbiter</div>
+        <a class="nav-link" data-nav="home" href="/home.html">首页</a>
+        <div data-admin-only>
+            <div class="nav-group">系统管理</div>
+            <a class="nav-link" data-nav="users" href="/system/users.html">用户管理</a>
+        </div>
+        <div class="sidebar-footer">
+            <button type="button" data-logout>退出登录</button>
+        </div>
+    </aside>
+
+    <div class="content">
+        <header class="topbar">
+            <h1>首页</h1>
+            <div class="topbar-user">
+                <span data-user-name></span>
+                <span class="muted"> / </span>
+                <span data-user-scope></span>
+            </div>
+        </header>
+
+        <main class="page">
+            <p class="alert error" id="homeError" role="alert" hidden></p>
+
+            <section class="card-grid">
+                <article class="card">
+                    <div class="label">服务状态</div>
+                    <div class="value" id="serviceState">-</div>
+                </article>
+                <article class="card">
+                    <div class="label">服务版本</div>
+                    <div class="value" id="serviceVersion">-</div>
+                </article>
+                <article class="card">
+                    <div class="label">服务器时间</div>
+                    <div class="value" id="serverTime">-</div>
+                </article>
+            </section>
+
+            <section class="card">
+                <div class="label">当前账户</div>
+                <p class="muted">
+                    你正在使用 <strong data-user-name></strong>
+                    （<span data-user-scope></span>）访问 Arbiter Console。
+                </p>
+            </section>
+        </main>
+    </div>
+</div>
+
+<script src="/assets/console.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        ArbiterConsole.initShell('home');
+        const error = document.getElementById('homeError');
+        try {
+            const status = await ArbiterConsole.api('GET', '/status');
+            document.getElementById('serviceState').textContent = status.state;
+            document.getElementById('serviceVersion').textContent = status.version;
+            document.getElementById('serverTime').textContent = status.serverTime;
+        } catch (failure) {
+            ArbiterConsole.showError(error, failure);
+        }
+    });
+</script>
+</body>
+</html>

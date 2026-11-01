@@ -1,0 +1,70 @@
+#!/usr/bin/env sh
+# Arbiter CLI launcher. Requires Java 17 or newer.
+set -eu
+
+ARBITER_TOOL=arbiter
+
+# Resolve the real script path so a symlinked launcher still finds its root.
+SELF=$0
+if command -v readlink >/dev/null 2>&1; then
+  while [ -h "$SELF" ]; do
+    SELF_DIR=$(CDPATH= cd -- "$(dirname -- "$SELF")" && pwd)
+    LINK=$(readlink "$SELF")
+    case $LINK in
+      /*) SELF=$LINK ;;
+      *) SELF=$SELF_DIR/$LINK ;;
+    esac
+  done
+fi
+SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$SELF")" && pwd)
+
+if [ ! -f "$SCRIPT_DIR/_arbiter-common.sh" ]; then
+  echo "arbiter: missing launcher support file: $SCRIPT_DIR/_arbiter-common.sh" >&2
+  exit 2
+fi
+. "$SCRIPT_DIR/_arbiter-common.sh"
+
+arbiter_resolve_home
+
+ARBITER_MAIN_JAR=${ARBITER_MAIN_JAR_OVERRIDE:-$ARBITER_HOME/lib/cli/arbiter-cli-launcher.jar}
+arbiter_require_file "$ARBITER_MAIN_JAR"
+arbiter_require_file "$ARBITER_HOME/lib/arbiter-api.jar"
+
+arbiter_select_java "${ARBITER_JAVA:-}"
+
+# JVM options are version-gated: Java 8/11 must reach the delegate without
+# unknown options such as --enable-native-access.
+ARBITER_JVM_FILE_OPTS=
+if [ "$JAVA_MAJOR" -ge 17 ]; then
+  arbiter_read_jvm_options "$ARBITER_HOME/conf/cli-jvm.options"
+fi
+
+ARBITER_CLASSPATH=
+arbiter_append_entry "$ARBITER_MAIN_JAR"
+arbiter_append_jars "$ARBITER_HOME/lib/cli"
+arbiter_append_entry "$ARBITER_HOME/lib/arbiter-api.jar"
+for jar in "$ARBITER_HOME"/lib/3rd/jackson-*.jar; do
+  [ -f "$jar" ] || continue
+  arbiter_append_entry "$jar"
+done
+arbiter_append_jars "$ARBITER_HOME/tools"
+arbiter_append_jars "$ARBITER_HOME/plugins"
+
+if [ -n "${ARBITER_DEBUG_LAUNCH:-}" ]; then
+  printf 'ARBITER_HOME=%s\n' "$ARBITER_HOME"
+  printf 'ARBITER_MAIN_JAR=%s\n' "$ARBITER_MAIN_JAR"
+  printf 'ARBITER_CLASSPATH=%s\n' "$ARBITER_CLASSPATH"
+  printf 'ARBITER_JVM_FILE_OPTS=%s\n' "$ARBITER_JVM_FILE_OPTS"
+fi
+
+# Word-split ARBITER_JAVA_OPTS on purpose, but never glob it.
+set -f
+set -- -Darbiter.home="$ARBITER_HOME" -cp "$ARBITER_CLASSPATH" \
+  io.github.arbiter.cli.launch.CLIMainDelegateLauncher "$@"
+set -- ${ARBITER_JAVA_OPTS:-} "$@"
+OLD_IFS=$IFS
+IFS='
+'
+set -- $ARBITER_JVM_FILE_OPTS "$@"
+IFS=$OLD_IFS
+exec "$JAVA_EXE" "$@"
