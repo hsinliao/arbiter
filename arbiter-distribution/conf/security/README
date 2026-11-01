@@ -1,0 +1,39 @@
+TLS material directory.
+
+The server always reads its key store and trust store from this directory:
+
+  conf/security/keystore.p12    server certificate and private key
+  conf/security/truststore.p12  client certificate authorities (mTLS)
+  conf/security/crypto.key      key ring for arbiter crypto (generated on first start)
+  conf/security/users.dat       encrypted users and password hashes
+                                (created with an initial admin on first start)
+  conf/security/initial-admin.txt  one-time initial admin credentials (0600)
+
+The server generates crypto.key on its first start when it is missing. It is
+the only persistent server key: token signing and user-store encryption use
+separate subkeys derived with HKDF-SHA256. crypto.key is a key ring:
+
+  version=1
+  active=k1
+  key.k1=<Base64 32 bytes>
+
+Rotate by adding key.k2 and setting active=k2; keep old keys so existing
+ciphertext remains decryptable. The TLS paths are not configurable. Passwords are set in conf/server.properties:
+
+  arbiter.server.tls.keystore.password
+  arbiter.server.tls.truststore.password
+
+Enable TLS with arbiter.server.tls.enabled=true and client certificates with
+arbiter.server.tls.client.auth=true (mTLS). Keep conf/server.properties
+readable only by the service account, and never commit real key material to a
+source checkout.
+
+When users.dat is missing, the first start creates an admin user with a random
+256-bit password. The credentials are written once to
+`conf/security/initial-admin.txt` with owner-only permissions; delete that file
+after reading it. The user document is encrypted with AES-256-GCM using a
+subkey derived from crypto.key. users.dat contains only a self-describing ciphertext envelope.
+Later starts reuse crypto.key and users.dat. Back them up together. Delete
+users.dat to create a new initial administrator on the next start. Existing
+plaintext users.json and the previous temporary users.key format migrate
+automatically during startup.
