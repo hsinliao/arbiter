@@ -22,10 +22,6 @@ public final class ServerLifecycle {
     private ServerLifecycle() {
     }
 
-    public static Path resolvePath(String value) {
-        return value == null || value.isBlank()
-                ? null : Path.of(value).toAbsolutePath().normalize();
-    }
 
     public static void writePidFile(Path path, long processId) throws IOException {
         if (path == null) {
@@ -43,7 +39,7 @@ public final class ServerLifecycle {
                                                               CountDownLatch stopped) {
         ScheduledExecutorService watcher = Executors.newSingleThreadScheduledExecutor(
                 runnable -> {
-                    Thread thread = new Thread(runnable, "arbiter-server-stop-watcher");
+                    Thread thread = new Thread(runnable, "arbiter-stop-watcher");
                     thread.setDaemon(true);
                     return thread;
                 });
@@ -67,31 +63,6 @@ public final class ServerLifecycle {
         return watcher;
     }
 
-    /**
-     * The lock file is the instance identity. A PID file can be stale or point
-     * at a reused PID; a live lock can only be held by a server instance.
-     */
-    public static boolean isRunning(Path lockPath) {
-        if (lockPath == null || !Files.isRegularFile(lockPath)) {
-            return false;
-        }
-        try (FileChannel channel = FileChannel.open(lockPath,
-                StandardOpenOption.READ, StandardOpenOption.WRITE)) {
-            FileLock probe = null;
-            try {
-                probe = channel.tryLock();
-            } catch (OverlappingFileLockException heldByThisJvm) {
-                return true;
-            }
-            if (probe != null) {
-                probe.release();
-                return false;
-            }
-            return true;
-        } catch (IOException unreadableState) {
-            return false;
-        }
-    }
 
     public static LockedInstance acquireLock(Path lockPath) throws IOException {
         if (lockPath == null) {
@@ -120,7 +91,7 @@ public final class ServerLifecycle {
             channel.force(true);
             markHidden(lockPath);
             return new LockedInstance(channel, held);
-        } catch (OverlappingFileLockException alreadyLocked) {
+        } catch (OverlappingFileLockException | IOException alreadyLocked) {
             channel.close();
             throw new IllegalStateException(
                     "A arbiter-server instance is already running", alreadyLocked);

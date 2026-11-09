@@ -19,7 +19,13 @@ public final class ServerStop {
                 return 0;
             }
             // The lock file is authoritative: a PID file may be stale after a crash.
-            String pid = ServerLockProbe.read(paths.lockFile());
+            String pid = "";
+            try {
+                pid = ServerLockProbe.read(paths.lockFile());
+            } catch (IOException lockedByServer) {
+                // Windows may deny reads while the server holds the file lock.
+                // Fall through to the PID file written before readiness.
+            }
             if (pid.isEmpty()) {
                 pid = ServerLockProbe.read(paths.pidFile());
             }
