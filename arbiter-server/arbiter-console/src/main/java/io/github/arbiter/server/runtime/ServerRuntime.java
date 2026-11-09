@@ -24,6 +24,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public final class ServerRuntime implements ApplicationListener<ApplicationReadyEvent>,
         AutoCloseable {
     private static final Logger LOG = LoggerFactory.getLogger(ServerRuntime.class);
+    private static final String SHUTDOWN_THREAD_NAME = "arbiter-shutdown";
 
     private final ServerConfig config;
     private final ServerPaths.Paths paths;
@@ -79,15 +80,19 @@ public final class ServerRuntime implements ApplicationListener<ApplicationReady
             long processId = ProcessHandle.current().pid();
             ServerLifecycle.writePidFile(paths.pidFile(), processId);
             if (unixServer != null) {
-                LOG.info("listening on {}", unixServer.description());
+                LOG.info("event=server.listener.ready transport=unix address={}",
+                        logValue(unixServer.description()));
             }
             if (config.transport().httpEnabled()) {
                 String scheme = config.tls().enabled() ? "https" : "http";
                 int port = httpPort(context);
-                LOG.info("listening on {}://{}:{}{}",
+                String apiUrl = "%s://%s:%d%s".formatted(
                         scheme, config.host(), port, config.apiPrefix());
-                LOG.info("console: {}://{}:{}/login.html",
+                String consoleUrl = "%s://%s:%d/login.html".formatted(
                         scheme, displayHost(config.host()), port);
+                LOG.info("event=server.listener.ready transport=http "
+                                + "api_url={} console_url={}",
+                        logValue(apiUrl), logValue(consoleUrl));
             }
             CountDownLatch stopped = new CountDownLatch(1);
             stopWatcher = ServerLifecycle.watchStopSignal(
@@ -95,15 +100,16 @@ public final class ServerRuntime implements ApplicationListener<ApplicationReady
             stopThread = new Thread(() -> {
                 try {
                     stopped.await();
-                    LOG.info("stop requested");
+                    LOG.info("event=server.stop.requested pid={}", processId);
                     context.close();
                 } catch (InterruptedException interrupted) {
                     Thread.currentThread().interrupt();
                 }
-            }, "arbiter-server-stop-controller");
+            }, SHUTDOWN_THREAD_NAME);
             stopThread.setDaemon(true);
             stopThread.start();
             ServerLifecycle.writePidFile(paths.readyFile(), processId);
+            LOG.info("event=server.ready pid={}", processId);
         } catch (Exception failure) {
             throw new IllegalStateException("Unable to complete server startup", failure);
         }
@@ -114,7 +120,7 @@ public final class ServerRuntime implements ApplicationListener<ApplicationReady
         if (!closed.compareAndSet(false, true)) {
             return;
         }
-        LOG.info("shutting down");
+        LOG.info("event=server.stopping");
         if (stopWatcher != null) {
             stopWatcher.shutdownNow();
         }
@@ -130,7 +136,7 @@ public final class ServerRuntime implements ApplicationListener<ApplicationReady
         ServerLifecycle.closeQuietly(
                 lock == null ? null : lock.lock(),
                 lock == null ? null : lock.channel());
-        LOG.info("stopped");
+        LOG.info("event=server.stopped");
     }
 
     private static int httpPort(ConfigurableApplicationContext context) {
@@ -151,7 +157,7 @@ public final class ServerRuntime implements ApplicationListener<ApplicationReady
         return host.contains(":") ? "[" + host + "]" : host;
     }
 
-    private static void logRuntimeEnvironment(Path home) {
+    static void logRuntimeEnvironment(Path home) {
         LOG.info("{} starting", ServerVersion.version());
         LOG.info("java.home={}", property("java.home"));
         LOG.info("java.version={}", property("java.version"));
@@ -159,6 +165,16 @@ public final class ServerRuntime implements ApplicationListener<ApplicationReady
         LOG.info("os.version={}", property("os.version"));
         LOG.info("os.arch={}", property("os.arch"));
         LOG.info("arbiter.home={}", home);
+    }
+
+    static String logValue(String value) {
+        String normalized = value == null || value.isBlank() ? "<unknown>" : value;
+        return "\"" + normalized
+                .replace("\\", "\\\\")
+                .replace("\"", "\\\"")
+                .replace("\r", "\\r")
+                .replace("\n", "\\n")
+                .replace("\t", "\\t") + "\"";
     }
 
     private static String property(String name) {

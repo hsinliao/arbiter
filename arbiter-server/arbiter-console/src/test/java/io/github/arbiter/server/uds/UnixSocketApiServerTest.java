@@ -72,6 +72,11 @@ class UnixSocketApiServerTest {
             assertEquals(200, login.status(), login.body());
             String token = mapper.readTree(login.body()).path("token").asText();
             assertFalse(token.isBlank());
+            assertTrue(Thread.getAllStackTraces().keySet().stream()
+                    .anyMatch(thread -> thread.getName().equals("arbiter-uds-accept")));
+            assertTrue(Thread.getAllStackTraces().keySet().stream()
+                    .anyMatch(thread -> thread.getName()
+                            .matches("arbiter-uds-worker-\\d+")));
 
             UdsResponse status = call(socket, new UdsRequest("GET",
                     "/api/v1" + ApiRoutes.STATUS,

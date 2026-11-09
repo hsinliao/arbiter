@@ -34,7 +34,9 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -156,6 +158,13 @@ class BootContextTest {
                 "x".repeat(1025), 413, "PAYLOAD_TOO_LARGE");
     }
 
+    @Test
+    void lifecycleThreadsUseStableNames() {
+        assertTrue(hasThreadNamed("arbiter-stop-watcher"));
+        assertTrue(hasThreadNamed("arbiter-shutdown"));
+        assertFalse(hasThreadNamed("arbiter-server-stop-controller"));
+    }
+
     @ParameterizedTest
     @MethodSource("contractCases")
     void httpAndUdsReturnTheSameStatusAndCode(ContractCase testCase) throws Exception {
@@ -250,6 +259,11 @@ class BootContextTest {
         } catch (IOException failure) {
             throw new ExceptionInInitializerError(failure);
         }
+    }
+
+    private static boolean hasThreadNamed(String name) {
+        return Thread.getAllStackTraces().keySet().stream()
+                .anyMatch(thread -> thread.getName().equals(name));
     }
 
     private record ContractCase(String name, String method, String path,

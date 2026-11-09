@@ -25,6 +25,10 @@ public final class ServerLockProbe {
                 probe = channel.tryLock();
             } catch (OverlappingFileLockException heldByThisJvm) {
                 return true;
+            } catch (IOException heldByAnotherProcess) {
+                // Windows reports a cross-process lock conflict as IOException
+                // rather than returning null from tryLock().
+                return true;
             }
             if (probe != null) {
                 probe.release();

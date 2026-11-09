@@ -22,6 +22,7 @@ import java.nio.file.attribute.PosixFilePermissions;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Unix-domain socket adapter. Frame format is a 4-byte big-endian length
@@ -31,6 +32,8 @@ public final class UnixSocketApiServer implements AutoCloseable {
     private static final Logger LOG = LoggerFactory.getLogger(UnixSocketApiServer.class);
     private static final int LENGTH_BYTES = Integer.BYTES;
     private static final int MAX_EXTRA_FRAME_BYTES = 65_536;
+    private static final String ACCEPT_THREAD_NAME = "arbiter-uds-accept";
+    private static final String WORKER_THREAD_PREFIX = "arbiter-uds-worker-";
 
     private final ServerConfig config;
     private final UdsRequestDispatcher dispatcher;
@@ -40,6 +43,7 @@ public final class UnixSocketApiServer implements AutoCloseable {
     private final ExecutorService executor;
     private final ServerSocketChannel serverChannel;
     private final AtomicBoolean closed = new AtomicBoolean();
+    private final AtomicInteger workerSequence = new AtomicInteger();
     private Thread acceptThread;
 
     public UnixSocketApiServer(ServerConfig config,
@@ -67,14 +71,15 @@ public final class UnixSocketApiServer implements AutoCloseable {
         this.serverChannel.bind(UnixDomainSocketAddress.of(socketPath));
         hideSocket(socketPath);
         this.executor = Executors.newFixedThreadPool(8, runnable -> {
-            Thread thread = new Thread(runnable, "arbiter-uds-worker");
+            Thread thread = new Thread(runnable,
+                    WORKER_THREAD_PREFIX + workerSequence.incrementAndGet());
             thread.setDaemon(false);
             return thread;
         });
     }
 
     public void start() {
-        acceptThread = new Thread(this::acceptLoop, "arbiter-uds-accept");
+        acceptThread = new Thread(this::acceptLoop, ACCEPT_THREAD_NAME);
         acceptThread.setDaemon(true);
         acceptThread.start();
     }

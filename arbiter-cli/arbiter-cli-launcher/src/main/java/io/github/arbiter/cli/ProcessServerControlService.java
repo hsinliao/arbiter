@@ -93,6 +93,9 @@ final class ProcessServerControlService implements ServerControlService {
                 probe = channel.tryLock();
             } catch (OverlappingFileLockException heldByThisJvm) {
                 return runningStatus(lockFile, pidFile);
+            } catch (IOException heldByAnotherProcess) {
+                // Windows reports a cross-process lock conflict as IOException.
+                return runningStatus(lockFile, pidFile);
             }
             if (probe != null) {
                 probe.release();
