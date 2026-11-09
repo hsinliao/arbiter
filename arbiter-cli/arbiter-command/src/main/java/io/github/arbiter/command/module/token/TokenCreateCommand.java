@@ -1,5 +1,7 @@
 package io.github.arbiter.command.module.token;
 
+import picocli.CommandLine.Model.CommandSpec;
+
 import io.github.arbiter.command.AbstractCommand;
 import io.github.arbiter.command.CliRoot;
 import io.github.arbiter.command.result.CommandResult;
@@ -18,7 +20,7 @@ import java.util.function.Supplier;
 @Command(name = "create", mixinStandardHelpOptions = true, resourceBundle = "messages")
 public final class TokenCreateCommand extends AbstractCommand implements Callable<Integer> {
     @Spec
-    private picocli.CommandLine.Model.CommandSpec spec;
+    private CommandSpec spec;
 
     @Option(names = "--username")
     private String username;

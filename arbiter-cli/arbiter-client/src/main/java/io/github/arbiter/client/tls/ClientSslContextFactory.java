@@ -7,6 +7,8 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.SecureRandom;
@@ -40,10 +42,10 @@ public final class ClientSslContextFactory {
         return context;
     }
 
-    private static KeyStore load(java.nio.file.Path path, String type, char[] password)
+    private static KeyStore load(Path path, String type, char[] password)
             throws GeneralSecurityException, IOException {
         KeyStore store = KeyStore.getInstance(type);
-        try (InputStream input = java.nio.file.Files.newInputStream(path)) {
+        try (InputStream input = Files.newInputStream(path)) {
             store.load(input, password);
         }
         return store;

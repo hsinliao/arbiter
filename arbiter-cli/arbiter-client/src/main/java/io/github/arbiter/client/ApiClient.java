@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.net.ConnectException;
 import java.net.http.HttpTimeoutException;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -63,7 +64,7 @@ public class ApiClient implements AutoCloseable {
 
     public <T> T post(String path, String token, Object body, Class<T> responseType,
                       List<String> sensitiveValues) {
-        List<String> secrets = new java.util.ArrayList<>(sensitiveValues);
+        List<String> secrets = new ArrayList<>(sensitiveValues);
         if (token != null) {
             secrets.add(token);
         }

@@ -1,5 +1,7 @@
 package io.github.arbiter.command.module.auth;
 
+import picocli.CommandLine.Model.CommandSpec;
+
 import io.github.arbiter.command.AbstractCommand;
 import io.github.arbiter.command.result.CommandResult;
 import io.github.arbiter.core.service.AuthService;
@@ -15,7 +17,7 @@ import java.util.concurrent.Callable;
 @Command(name = "logout", mixinStandardHelpOptions = true, resourceBundle = "messages")
 public final class AuthLogoutCommand extends AbstractCommand implements Callable<Integer> {
     @Spec
-    private picocli.CommandLine.Model.CommandSpec spec;
+    private CommandSpec spec;
 
     private final Supplier<AuthService> service;
 

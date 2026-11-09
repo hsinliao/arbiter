@@ -1,5 +1,7 @@
 package io.github.arbiter.command.module.user;
 
+import picocli.CommandLine.Model.CommandSpec;
+
 import io.github.arbiter.command.AbstractCommand;
 import io.github.arbiter.command.result.CommandResult;
 import io.github.arbiter.command.result.payload.UserPayload;
@@ -16,7 +18,7 @@ import java.util.function.Supplier;
 @Command(name = "create", mixinStandardHelpOptions = true, resourceBundle = "messages")
 public final class UserCreateCommand extends AbstractCommand implements Callable<Integer> {
     @Spec
-    private picocli.CommandLine.Model.CommandSpec spec;
+    private CommandSpec spec;
     @Parameters(index = "0", arity = "0..1")
     private String username;
     @Option(names = "--scope", defaultValue = "reader")

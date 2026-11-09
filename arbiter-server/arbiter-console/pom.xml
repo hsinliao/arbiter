@@ -11,7 +11,7 @@
     </parent>
 
     <artifactId>arbiter-console</artifactId>
-    <name>arbiter console</name>
+    <name>arbiter server: console</name>
 
     <properties>
         <spring-boot.version>4.1.2</spring-boot.version>
@@ -91,8 +91,9 @@
                             <goal>copy-dependencies</goal>
                         </goals>
                         <configuration>
-                            <outputDirectory>${project.build.directory}/server-lib</outputDirectory>
+                            <outputDirectory>${project.build.directory}/console-libs</outputDirectory>
                             <includeScope>runtime</includeScope>
+                            <stripVersion>true</stripVersion>
                             <excludeArtifactIds>arbiter-api,arbiter-control</excludeArtifactIds>
                         </configuration>
                     </execution>

@@ -6,6 +6,7 @@ import org.springframework.boot.health.contributor.Health;
 import org.springframework.boot.health.contributor.HealthIndicator;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
 import java.nio.file.Files;
 
 @Component
@@ -18,7 +19,7 @@ public final class SecurityMaterialHealthIndicator implements HealthIndicator {
             }
             CryptoKeys.active();
             return Health.up().withDetail("cryptoKey", CryptoKeys.path().toString()).build();
-        } catch (java.io.IOException | RuntimeException failure) {
+        } catch (IOException | RuntimeException failure) {
             return Health.down(failure).build();
         }
     }

@@ -16,6 +16,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.hamcrest.Matchers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpMethod;
@@ -25,6 +26,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -100,9 +102,9 @@ class BootContextTest {
 
         mvc.perform(request(HttpMethod.GET, "/actuator/health"))
                 .andExpect(status().isOk())
-                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                .andExpect(MockMvcResultMatchers
                         .jsonPath("$.components.userStore.status").value("UP"))
-                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                .andExpect(MockMvcResultMatchers
                         .jsonPath("$.components.securityMaterial.status").value("UP"));
 
         mvc.perform(request(HttpMethod.GET, "/actuator/metrics"))
@@ -133,12 +135,12 @@ class BootContextTest {
     void servesConsolePagesAndConfig() throws Exception {
         mvc.perform(request(HttpMethod.GET, "/login.html"))
                 .andExpect(status().isOk())
-                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
-                        .content().string(org.hamcrest.Matchers.containsString(
+                .andExpect(MockMvcResultMatchers
+                .content().string(Matchers.containsString(
                                 "Arbiter Console")));
         mvc.perform(request(HttpMethod.GET, "/console/config"))
                 .andExpect(status().isOk())
-                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                .andExpect(MockMvcResultMatchers
                         .jsonPath("$.apiPrefix").value("/api/v1"));
         mvc.perform(request(HttpMethod.GET, "/"))
                 .andExpect(status().is3xxRedirection());

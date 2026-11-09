@@ -189,7 +189,7 @@ public final class FileUserRepository implements MutableUserRepository {
         UserFile userFile;
         try {
             userFile = mapper.readValue(plaintext, UserFile.class);
-        } catch (tools.jackson.core.JacksonException failure) {
+        } catch (JacksonException failure) {
             throw new IOException("user store is not valid JSON: " + file, failure);
         }
         validate(userFile);

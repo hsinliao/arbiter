@@ -1,5 +1,7 @@
 package io.github.arbiter.command.module.auth;
 
+import picocli.CommandLine.Model.CommandSpec;
+
 import io.github.arbiter.api.config.ArbiterKeys;
 
 import io.github.arbiter.command.AbstractCommand;
@@ -20,7 +22,7 @@ import java.util.concurrent.Callable;
 @Command(name = "login", mixinStandardHelpOptions = true, resourceBundle = "messages")
 public final class AuthLoginCommand extends AbstractCommand implements Callable<Integer> {
     @Spec
-    private picocli.CommandLine.Model.CommandSpec spec;
+    private CommandSpec spec;
 
     @Option(names = "--username")
     private String username;

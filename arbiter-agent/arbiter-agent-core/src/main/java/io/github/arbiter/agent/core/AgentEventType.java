@@ -1,0 +1,17 @@
+package io.github.arbiter.agent.core;
+
+public enum AgentEventType {
+    RUN_STARTED,
+    RUN_RESUMED,
+    STATE_CHANGED,
+    MODEL_REQUEST,
+    MODEL_RESPONSE,
+    TOOL_REQUEST,
+    TOOL_RESULT,
+    CHECKPOINT_SAVED,
+    MEMORY_RETRIEVED,
+    BUDGET_EXCEEDED,
+    RUN_COMPLETED,
+    RUN_FAILED,
+    RUN_CANCELLED
+}

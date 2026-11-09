@@ -11,7 +11,7 @@
     </parent>
 
     <artifactId>arbiter-control</artifactId>
-    <name>arbiter control</name>
+    <name>arbiter server: control</name>
 
     <dependencies>
         <dependency>

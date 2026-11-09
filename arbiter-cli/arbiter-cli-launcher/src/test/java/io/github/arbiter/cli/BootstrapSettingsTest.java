@@ -1,6 +1,8 @@
 package io.github.arbiter.cli;
 
 import io.github.arbiter.api.config.ArbiterKeys;
+import io.github.arbiter.client.config.HttpTransportConfig;
+import io.github.arbiter.client.config.UnixSocketTransportConfig;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,7 +49,7 @@ class BootstrapSettingsTest {
             assertEquals("unix:" + temporaryDirectory.resolve("run").resolve("server.sock")
                     .toAbsolutePath().normalize(), settings.server());
             assertTrue(settings.transportConfig()
-                    instanceof io.github.arbiter.client.config.UnixSocketTransportConfig);
+                instanceof UnixSocketTransportConfig);
         } finally {
             if (previous == null) {
                 System.clearProperty(ArbiterKeys.SystemProperty.HOME);
@@ -184,7 +186,7 @@ class BootstrapSettingsTest {
             BootstrapSettings settings = BootstrapSettings.resolve(null, Map.of(), temporaryDirectory);
 
             assertTrue(settings.transportConfig()
-                    instanceof io.github.arbiter.client.config.HttpTransportConfig);
+                instanceof HttpTransportConfig);
         } finally {
             if (previous == null) {
                 System.clearProperty(ArbiterKeys.SystemProperty.HOME);

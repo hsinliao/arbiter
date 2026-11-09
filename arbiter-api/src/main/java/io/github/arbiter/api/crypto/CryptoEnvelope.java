@@ -1,5 +1,7 @@
 package io.github.arbiter.api.crypto;
 
+import java.util.Optional;
+
 /**
  * Self-describing ciphertext: {@code arbiter:v<version>:<algorithm>:<keyId>:<payload>}.
  * The payload layout belongs to the algorithm; decryption never guesses the
@@ -29,9 +31,9 @@ public record CryptoEnvelope(int version, String algorithm, String keyId, String
      * Parses an envelope, or returns empty for text that is not an envelope.
      * Malformed envelopes throw {@link CryptoException}.
      */
-    public static java.util.Optional<CryptoEnvelope> parse(String text) {
+    public static Optional<CryptoEnvelope> parse(String text) {
         if (text == null || !text.startsWith(PREFIX + ":")) {
-            return java.util.Optional.empty();
+        return Optional.empty();
         }
         String[] parts = text.split(":", 5);
         if (parts.length != 5 || !parts[1].matches("v\\d+")) {
@@ -44,7 +46,7 @@ public record CryptoEnvelope(int version, String algorithm, String keyId, String
             throw new CryptoException(CryptoException.Reason.MALFORMED_ENVELOPE, text);
         }
         try {
-            return java.util.Optional.of(
+        return Optional.of(
                     new CryptoEnvelope(version, parts[2], parts[3], parts[4]));
         } catch (IllegalArgumentException invalid) {
             throw new CryptoException(CryptoException.Reason.MALFORMED_ENVELOPE, text);

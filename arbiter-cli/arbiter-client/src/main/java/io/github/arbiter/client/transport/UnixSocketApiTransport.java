@@ -1,5 +1,6 @@
 package io.github.arbiter.client.transport;
 
+import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
 import io.github.arbiter.api.uds.UdsRequest;
 import io.github.arbiter.api.uds.UdsResponse;
@@ -61,7 +62,7 @@ public final class UnixSocketApiTransport implements ApiTransport {
             } finally {
                 timeout.cancel(false);
             }
-        } catch (IOException | tools.jackson.core.JacksonException failure) {
+        } catch (IOException | JacksonException failure) {
             throw new NetworkException(failure);
         }
     }

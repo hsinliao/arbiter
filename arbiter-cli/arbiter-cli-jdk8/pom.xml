@@ -11,7 +11,7 @@
     </parent>
 
     <artifactId>arbiter-cli-jdk8</artifactId>
-    <name>arbiter CLI jdk8</name>
+    <name>arbiter cli: jdk8</name>
 
     <build>
         <plugins>

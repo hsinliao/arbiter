@@ -17,6 +17,7 @@
         <module>arbiter-server</module>
         <module>arbiter-cli</module>
         <module>arbiter-distribution</module>
+        <module>arbiter-agent</module>
     </modules>
 
     <properties>

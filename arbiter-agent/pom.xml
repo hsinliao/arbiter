@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>io.github.arbiter</groupId>
+        <artifactId>arbiter</artifactId>
+        <version>${revision}</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>arbiter-agent</artifactId>
+    <packaging>pom</packaging>
+    <name>ARBITER AGENT</name>
+
+    <modules>
+        <module>arbiter-agent-spi</module>
+        <module>arbiter-agent-core</module>
+        <module>arbiter-agent-observability</module>
+        <module>arbiter-agent-llm</module>
+        <module>arbiter-agent-tool</module>
+        <module>arbiter-agent-memory</module>
+        <module>arbiter-agent-plugin</module>
+        <module>arbiter-agent-runtime</module>
+    </modules>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>io.github.arbiter</groupId>
+                <artifactId>arbiter-agent-spi</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.arbiter</groupId>
+                <artifactId>arbiter-agent-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.arbiter</groupId>
+                <artifactId>arbiter-agent-observability</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.arbiter</groupId>
+                <artifactId>arbiter-agent-llm</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.arbiter</groupId>
+                <artifactId>arbiter-agent-tool</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.arbiter</groupId>
+                <artifactId>arbiter-agent-memory</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.arbiter</groupId>
+                <artifactId>arbiter-agent-plugin</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.arbiter</groupId>
+                <artifactId>arbiter-agent-runtime</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>

@@ -22,6 +22,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Clock;
 import java.time.Duration;
@@ -107,9 +109,9 @@ class ControllerTest {
                 .andExpect(jsonPath("$.code").value("FORBIDDEN_SCOPE"));
     }
 
-    @org.springframework.web.bind.annotation.RestController
+    @RestController
     static final class UnannotatedController {
-        @org.springframework.web.bind.annotation.GetMapping("/unannotated")
+    @GetMapping("/unannotated")
         String value() {
             return "ok";
         }

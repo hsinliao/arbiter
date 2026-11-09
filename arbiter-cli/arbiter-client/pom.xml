@@ -10,8 +10,8 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>arbiter-client</artifactId>
-    <name>arbiter client</name>
+    <artifactId>arbiter-cli-client</artifactId>
+    <name>arbiter cli: client</name>
 
     <dependencies>
         <dependency>
@@ -21,7 +21,7 @@
         </dependency>
         <dependency>
             <groupId>io.github.arbiter</groupId>
-            <artifactId>arbiter-core</artifactId>
+            <artifactId>arbiter-cli-core</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

@@ -10,8 +10,8 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>arbiter-core</artifactId>
-    <name>arbiter core contracts</name>
+    <artifactId>arbiter-cli-core</artifactId>
+    <name>arbiter cli: core</name>
 
     <dependencies>
         <dependency>

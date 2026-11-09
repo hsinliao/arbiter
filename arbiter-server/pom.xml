@@ -12,7 +12,7 @@
 
     <artifactId>arbiter-server</artifactId>
     <packaging>pom</packaging>
-    <name>arbiter server</name>
+    <name>ARBITER SERVER</name>
 
     <modules>
         <module>arbiter-control</module>

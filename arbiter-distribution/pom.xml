@@ -12,7 +12,7 @@
 
     <artifactId>arbiter-distribution</artifactId>
     <packaging>pom</packaging>
-    <name>arbiter distribution</name>
+    <name>ARBITER DISTRIBUTION</name>
 
     <dependencies>
         <dependency>
@@ -27,22 +27,22 @@
         </dependency>
         <dependency>
             <groupId>io.github.arbiter</groupId>
-            <artifactId>arbiter-core</artifactId>
+            <artifactId>arbiter-cli-core</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>io.github.arbiter</groupId>
-            <artifactId>arbiter-command</artifactId>
+            <artifactId>arbiter-cli-command</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>io.github.arbiter</groupId>
-            <artifactId>arbiter-client</artifactId>
+            <artifactId>arbiter-cli-client</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>io.github.arbiter</groupId>
-            <artifactId>arbiter-shell</artifactId>
+            <artifactId>arbiter-cli-shell</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -70,6 +70,50 @@
             <artifactId>jline</artifactId>
             <version>${jline.version}</version>
         </dependency>
+
+        <!-- arbiter-agent -->
+        <dependency>
+            <groupId>io.github.arbiter</groupId>
+            <artifactId>arbiter-agent-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.github.arbiter</groupId>
+            <artifactId>arbiter-agent-llm</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.github.arbiter</groupId>
+            <artifactId>arbiter-agent-memory</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.github.arbiter</groupId>
+            <artifactId>arbiter-agent-plugin</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.github.arbiter</groupId>
+            <artifactId>arbiter-agent-runtime</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.github.arbiter</groupId>
+            <artifactId>arbiter-agent-spi</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.github.arbiter</groupId>
+            <artifactId>arbiter-agent-tool</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
     </dependencies>
 
     <build>

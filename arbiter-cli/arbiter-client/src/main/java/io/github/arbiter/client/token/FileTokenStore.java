@@ -1,5 +1,6 @@
 package io.github.arbiter.client.token;
 
+import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.SerializationFeature;
 import tools.jackson.databind.json.JsonMapper;
@@ -8,6 +9,7 @@ import io.github.arbiter.core.service.TokenSource;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -51,7 +53,7 @@ public final class FileTokenStore implements TokenStore {
                 return Optional.empty();
             }
             return Optional.of(new ResolvedToken(TokenSource.FILE, stored));
-        } catch (tools.jackson.core.JacksonException exception) {
+        } catch (JacksonException exception) {
             throw new LocalStorageException(
                     "Unable to read local credentials: " + credentialsFile, exception);
         }
@@ -79,14 +81,14 @@ public final class FileTokenStore implements TokenStore {
                 try {
                     Files.move(temporary, credentialsFile, StandardCopyOption.REPLACE_EXISTING,
                             StandardCopyOption.ATOMIC_MOVE);
-                } catch (java.nio.file.AtomicMoveNotSupportedException unsupported) {
+        } catch (AtomicMoveNotSupportedException unsupported) {
                     Files.move(temporary, credentialsFile, StandardCopyOption.REPLACE_EXISTING);
                 }
                 restrictFile(credentialsFile);
             } finally {
                 Files.deleteIfExists(temporary);
             }
-        } catch (IOException | tools.jackson.core.JacksonException exception) {
+        } catch (IOException | JacksonException exception) {
             throw new LocalStorageException(
                     "Unable to persist local credentials: " + credentialsFile, exception);
         }

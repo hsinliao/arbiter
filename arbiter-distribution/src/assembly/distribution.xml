@@ -14,52 +14,11 @@
             <directory>${project.basedir}/bin</directory>
             <includes>
                 <include>arbiter</include>
-            </includes>
-            <outputDirectory>bin</outputDirectory>
-            <fileMode>0755</fileMode>
-        </fileSet>
-        <fileSet>
-            <directory>${project.basedir}/bin</directory>
-            <includes>
-                <include>arbiter.bat</include>
-            </includes>
-            <outputDirectory>bin</outputDirectory>
-            <lineEnding>crlf</lineEnding>
-            <fileMode>0644</fileMode>
-        </fileSet>
-        <fileSet>
-            <directory>${project.basedir}/bin</directory>
-            <includes>
                 <include>server-start</include>
-            </includes>
-            <outputDirectory>bin</outputDirectory>
-            <fileMode>0755</fileMode>
-        </fileSet>
-        <fileSet>
-            <directory>${project.basedir}/bin</directory>
-            <includes>
-                <include>server-start.bat</include>
-            </includes>
-            <outputDirectory>bin</outputDirectory>
-            <lineEnding>crlf</lineEnding>
-            <fileMode>0644</fileMode>
-        </fileSet>
-        <fileSet>
-            <directory>${project.basedir}/bin</directory>
-            <includes>
                 <include>server-stop</include>
             </includes>
             <outputDirectory>bin</outputDirectory>
             <fileMode>0755</fileMode>
-        </fileSet>
-        <fileSet>
-            <directory>${project.basedir}/bin</directory>
-            <includes>
-                <include>server-stop.bat</include>
-            </includes>
-            <outputDirectory>bin</outputDirectory>
-            <lineEnding>crlf</lineEnding>
-            <fileMode>0644</fileMode>
         </fileSet>
         <fileSet>
             <directory>${project.basedir}/bin</directory>
@@ -72,6 +31,9 @@
         <fileSet>
             <directory>${project.basedir}/bin</directory>
             <includes>
+                <include>arbiter.bat</include>
+                <include>server-start.bat</include>
+                <include>server-stop.bat</include>
                 <include>_arbiter-common.bat</include>
             </includes>
             <outputDirectory>bin</outputDirectory>
@@ -96,7 +58,7 @@
             <fileMode>0644</fileMode>
         </fileSet>
         <fileSet>
-            <directory>${project.basedir}/../arbiter-server/arbiter-console/target/server-lib</directory>
+            <directory>${project.basedir}/../arbiter-server/arbiter-console/target/console-libs</directory>
             <outputDirectory>lib/3rd</outputDirectory>
             <fileMode>0644</fileMode>
         </fileSet>
@@ -112,10 +74,10 @@
             <fileMode>0644</fileMode>
             <includes>
                 <include>io.github.arbiter:arbiter-cli-launcher</include>
-                <include>io.github.arbiter:arbiter-core</include>
-                <include>io.github.arbiter:arbiter-command</include>
-                <include>io.github.arbiter:arbiter-client</include>
-                <include>io.github.arbiter:arbiter-shell</include>
+                <include>io.github.arbiter:arbiter-cli-core</include>
+                <include>io.github.arbiter:arbiter-cli-command</include>
+                <include>io.github.arbiter:arbiter-cli-client</include>
+                <include>io.github.arbiter:arbiter-cli-shell</include>
                 <include>info.picocli:picocli</include>
                 <include>info.picocli:picocli-shell-jline3</include>
                 <include>org.jline:jline</include>
@@ -123,24 +85,31 @@
         </dependencySet>
         <dependencySet>
             <outputDirectory>lib/bootstrap</outputDirectory>
-            <outputFileNameMapping>arbiter-control.jar</outputFileNameMapping>
+            <outputFileNameMapping>${artifact.artifactId}.${artifact.extension}</outputFileNameMapping>
             <useProjectArtifact>false</useProjectArtifact>
             <useTransitiveDependencies>false</useTransitiveDependencies>
             <scope>runtime</scope>
             <fileMode>0644</fileMode>
             <includes>
                 <include>io.github.arbiter:arbiter-control</include>
+                <include>io.github.arbiter:arbiter-console</include>
             </includes>
         </dependencySet>
         <dependencySet>
-            <outputDirectory>lib/bootstrap</outputDirectory>
-            <outputFileNameMapping>arbiter-console.jar</outputFileNameMapping>
+            <outputDirectory>lib/agent</outputDirectory>
+            <outputFileNameMapping>${artifact.artifactId}.${artifact.extension}</outputFileNameMapping>
             <useProjectArtifact>false</useProjectArtifact>
             <useTransitiveDependencies>false</useTransitiveDependencies>
             <scope>runtime</scope>
             <fileMode>0644</fileMode>
             <includes>
-                <include>io.github.arbiter:arbiter-console</include>
+                <include>io.github.arbiter:arbiter-agent-core</include>
+                <include>io.github.arbiter:arbiter-agent-llm</include>
+                <include>io.github.arbiter:arbiter-agent-memory</include>
+                <include>io.github.arbiter:arbiter-agent-plugin</include>
+                <include>io.github.arbiter:arbiter-agent-runtime</include>
+                <include>io.github.arbiter:arbiter-agent-spi</include>
+                <include>io.github.arbiter:arbiter-agent-tool</include>
             </includes>
         </dependencySet>
         <dependencySet>

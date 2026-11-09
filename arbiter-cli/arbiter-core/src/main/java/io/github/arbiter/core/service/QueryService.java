@@ -1,5 +1,7 @@
 package io.github.arbiter.core.service;
 
+import io.github.arbiter.core.exception.DomainException;
+
 public interface QueryService {
-    QueryResult query(String name) throws io.github.arbiter.core.exception.DomainException;
+    QueryResult query(String name) throws DomainException;
 }

@@ -11,7 +11,7 @@
     </parent>
 
     <artifactId>arbiter-cli-launcher</artifactId>
-    <name>arbiter CLI launcher</name>
+    <name>arbiter cli: launcher</name>
 
     <dependencies>
         <dependency>
@@ -21,22 +21,22 @@
         </dependency>
         <dependency>
             <groupId>io.github.arbiter</groupId>
-            <artifactId>arbiter-core</artifactId>
+            <artifactId>arbiter-cli-core</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>io.github.arbiter</groupId>
-            <artifactId>arbiter-command</artifactId>
+            <artifactId>arbiter-cli-command</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>io.github.arbiter</groupId>
-            <artifactId>arbiter-client</artifactId>
+            <artifactId>arbiter-cli-client</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>io.github.arbiter</groupId>
-            <artifactId>arbiter-shell</artifactId>
+            <artifactId>arbiter-cli-shell</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

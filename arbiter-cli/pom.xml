@@ -12,7 +12,7 @@
 
     <artifactId>arbiter-cli</artifactId>
     <packaging>pom</packaging>
-    <name>arbiter CLI</name>
+    <name>ARBITER CLI</name>
 
     <modules>
         <module>arbiter-core</module>

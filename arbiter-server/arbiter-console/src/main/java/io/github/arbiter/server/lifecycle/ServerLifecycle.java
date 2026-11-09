@@ -1,6 +1,7 @@
 package io.github.arbiter.server.lifecycle;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.channels.OverlappingFileLockException;
@@ -85,7 +86,7 @@ public final class ServerLifecycle {
             FileLock held = lock;
             channel.position(0);
             channel.truncate(0);
-            channel.write(java.nio.ByteBuffer.wrap(
+            channel.write(ByteBuffer.wrap(
                     Long.toString(ProcessHandle.current().pid())
                             .getBytes(StandardCharsets.US_ASCII)));
             channel.force(true);

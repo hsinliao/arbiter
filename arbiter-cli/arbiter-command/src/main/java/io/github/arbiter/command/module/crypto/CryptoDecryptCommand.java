@@ -1,5 +1,7 @@
 package io.github.arbiter.command.module.crypto;
 
+import picocli.CommandLine.Model.CommandSpec;
+
 import io.github.arbiter.command.AbstractCommand;
 import io.github.arbiter.command.result.CommandResult;
 import io.github.arbiter.command.result.payload.DecryptedPayload;
@@ -15,7 +17,7 @@ import java.util.concurrent.Callable;
 @Command(name = "decrypt", mixinStandardHelpOptions = true, resourceBundle = "messages")
 public final class CryptoDecryptCommand extends AbstractCommand implements Callable<Integer> {
     @Spec
-    private picocli.CommandLine.Model.CommandSpec spec;
+    private CommandSpec spec;
 
     @Parameters(index = "0", arity = "1", paramLabel = "CIPHERTEXT")
     private String ciphertext;

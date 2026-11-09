@@ -1,5 +1,7 @@
 package io.github.arbiter.command.module.server;
 
+import picocli.CommandLine.Model.CommandSpec;
+
 import io.github.arbiter.command.AbstractCommand;
 import io.github.arbiter.command.result.CommandResult;
 import io.github.arbiter.core.service.ServerControlService;
@@ -13,7 +15,7 @@ import java.util.concurrent.Callable;
 @Command(name = "stop", mixinStandardHelpOptions = true, resourceBundle = "messages")
 public final class ServerStopCommand extends AbstractCommand implements Callable<Integer> {
     @Spec
-    private picocli.CommandLine.Model.CommandSpec spec;
+    private CommandSpec spec;
 
     private final ServerControlService service;
 

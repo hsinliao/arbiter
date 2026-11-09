@@ -10,18 +10,18 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>arbiter-shell</artifactId>
-    <name>arbiter shell</name>
+    <artifactId>arbiter-cli-shell</artifactId>
+    <name>arbiter cli: shell</name>
 
     <dependencies>
         <dependency>
             <groupId>io.github.arbiter</groupId>
-            <artifactId>arbiter-core</artifactId>
+            <artifactId>arbiter-cli-core</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>io.github.arbiter</groupId>
-            <artifactId>arbiter-command</artifactId>
+            <artifactId>arbiter-cli-command</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

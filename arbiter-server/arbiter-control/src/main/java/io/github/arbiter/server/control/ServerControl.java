@@ -1,5 +1,6 @@
 package io.github.arbiter.server.control;
 
+import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -66,7 +67,7 @@ public final class ServerControl {
             if (pid.isEmpty()) {
                 pid = ServerLockProbe.read(paths.pidFile());
             }
-        } catch (java.io.IOException failure) {
+        } catch (IOException failure) {
             pid = "";
         }
         System.out.println(pid.isEmpty() ? "RUNNING" : "RUNNING " + pid);

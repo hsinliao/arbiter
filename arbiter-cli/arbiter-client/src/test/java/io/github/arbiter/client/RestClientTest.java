@@ -9,14 +9,17 @@ import io.github.arbiter.client.ApiClient;
 import io.github.arbiter.client.transport.HttpApiTransport;
 import io.github.arbiter.client.token.StoredToken;
 import io.github.arbiter.core.exception.AuthenticationException;
+import io.github.arbiter.core.exception.AuthorizationException;
 import io.github.arbiter.core.exception.ConflictException;
 import io.github.arbiter.core.exception.LoginCredentialsException;
 import io.github.arbiter.core.exception.LoginDisabledException;
 import io.github.arbiter.core.exception.LoginRateLimitException;
+import io.github.arbiter.core.exception.LoginUnavailableException;
 import io.github.arbiter.core.exception.NetworkException;
 import io.github.arbiter.core.exception.NotFoundException;
 import io.github.arbiter.core.exception.RateLimitException;
 import io.github.arbiter.core.exception.ServerException;
+import io.github.arbiter.core.exception.DomainException;
 import io.github.arbiter.core.service.AuthStatus;
 import io.github.arbiter.core.service.LoginResult;
 import io.github.arbiter.core.service.SystemStatus;
@@ -100,7 +103,7 @@ class RestClientTest {
     @Test
     void mapsEveryRequiredHttpFailure() {
         assertStatusMapping(401, AuthenticationException.class);
-        assertStatusMapping(403, io.github.arbiter.core.exception.AuthorizationException.class);
+        assertStatusMapping(403, AuthorizationException.class);
         assertStatusMapping(404, NotFoundException.class);
         assertStatusMapping(409, ConflictException.class);
         assertStatusMapping(429, RateLimitException.class);
@@ -118,7 +121,7 @@ class RestClientTest {
 
         LoginCredentialsException ignored = null;
         assertThrows(
-                io.github.arbiter.core.exception.LoginUnavailableException.class,
+                LoginUnavailableException.class,
                 () -> service.login("alice", "password-value"));
         server.verify(1, postRequestedFor(urlPathEqualTo("/api/v1/auth/login")));
     }
@@ -190,7 +193,7 @@ class RestClientTest {
                 () -> service.login("alice", "password"));
 
         server.stop();
-        assertThrows(io.github.arbiter.core.exception.LoginUnavailableException.class,
+        assertThrows(LoginUnavailableException.class,
                 () -> service.login("alice", "password"));
         assertTrue(tokens.saved() == null);
     }
@@ -297,7 +300,7 @@ class RestClientTest {
         assertTrue(expected.isInstance(error), () -> "Expected " + expected
                 + " but got " + error.getClass());
         assertTrue(error.getMessage().contains(error instanceof
-                io.github.arbiter.core.exception.DomainException domain
+                DomainException domain
                 ? domain.messageKey() : ""));
     }
 

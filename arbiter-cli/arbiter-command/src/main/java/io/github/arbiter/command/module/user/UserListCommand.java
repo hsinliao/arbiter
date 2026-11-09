@@ -1,5 +1,7 @@
 package io.github.arbiter.command.module.user;
 
+import picocli.CommandLine.Model.CommandSpec;
+
 import io.github.arbiter.command.AbstractCommand;
 import io.github.arbiter.command.result.CommandResult;
 import io.github.arbiter.command.result.payload.UserListPayload;
@@ -14,7 +16,7 @@ import java.util.function.Supplier;
 @Command(name = "list", mixinStandardHelpOptions = true, resourceBundle = "messages")
 public final class UserListCommand extends AbstractCommand implements Callable<Integer> {
     @Spec
-    private picocli.CommandLine.Model.CommandSpec spec;
+    private CommandSpec spec;
     private final Supplier<UserService> service;
 
     public UserListCommand(Supplier<UserService> service) {

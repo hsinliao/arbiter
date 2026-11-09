@@ -3,8 +3,10 @@ package io.github.arbiter.command;
 import picocli.CommandLine;
 import picocli.CommandLine.Model.CommandSpec;
 
+import java.util.MissingResourceException;
 import java.util.Locale;
 import java.util.ResourceBundle;
+import java.util.function.Consumer;
 
 /**
  * Applies help.* resource keys to the already-built command model. Result
@@ -43,13 +45,13 @@ public final class HelpLocalizer {
     private static String value(ResourceBundle bundle, String key) {
         try {
             return bundle.getString(key);
-        } catch (java.util.MissingResourceException missing) {
+        } catch (MissingResourceException missing) {
             return null;
         }
     }
 
     private static void setIfPresent(ResourceBundle bundle, String key,
-                                     java.util.function.Consumer<String> setter) {
+            Consumer<String> setter) {
         String value = value(bundle, key);
         if (value != null) {
             setter.accept(value);

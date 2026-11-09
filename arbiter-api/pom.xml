@@ -11,7 +11,7 @@
     </parent>
 
     <artifactId>arbiter-api</artifactId>
-    <name>arbiter API contract</name>
+    <name>ARBITER API</name>
 
     <dependencies>
         <!-- Jackson 3 still uses the Jackson 2 annotation package. -->

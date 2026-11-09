@@ -1,5 +1,7 @@
 package io.github.arbiter.command.module.auth;
 
+import picocli.CommandLine.Model.CommandSpec;
+
 import io.github.arbiter.command.AbstractCommand;
 import io.github.arbiter.command.CliRoot;
 import io.github.arbiter.command.result.CommandResult;
@@ -20,7 +22,7 @@ import java.util.concurrent.Callable;
 @Command(name = "status", mixinStandardHelpOptions = true, resourceBundle = "messages")
 public final class AuthStatusCommand extends AbstractCommand implements Callable<Integer> {
     @Spec
-    private picocli.CommandLine.Model.CommandSpec spec;
+    private CommandSpec spec;
 
     private final Supplier<AuthService> service;
 

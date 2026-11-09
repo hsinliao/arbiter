@@ -1,5 +1,7 @@
 package io.github.arbiter.command.module.server;
 
+import picocli.CommandLine.Model.CommandSpec;
+
 import io.github.arbiter.command.AbstractCommand;
 import io.github.arbiter.command.result.CommandResult;
 import io.github.arbiter.command.result.payload.ServerOperationPayload;
@@ -14,7 +16,7 @@ import java.util.concurrent.Callable;
 @Command(name = "start", mixinStandardHelpOptions = true, resourceBundle = "messages")
 public final class ServerStartCommand extends AbstractCommand implements Callable<Integer> {
     @Spec
-    private picocli.CommandLine.Model.CommandSpec spec;
+    private CommandSpec spec;
 
     @Option(names = "--debug",
             arity = "0..1",

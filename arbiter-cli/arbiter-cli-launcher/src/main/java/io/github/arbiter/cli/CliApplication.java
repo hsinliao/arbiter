@@ -26,6 +26,7 @@ import io.github.arbiter.shell.ShellSession;
 import io.github.arbiter.shell.ShellTerminal;
 import picocli.CommandLine;
 
+import java.io.OutputStream;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Locale;
@@ -46,7 +47,7 @@ final class CliApplication {
                               Path configDirectory, Locale startupLocale,
                               String fixedResultLanguage,
                               InputPrompter input, SecretInput secret,
-                              java.io.OutputStream stdout, java.io.OutputStream stderr) {
+            OutputStream stdout, OutputStream stderr) {
         ResultRenderer renderer = new ResultRenderer(environment::get, Locale.getDefault());
         RuntimeSignals signals = new RuntimeSignals(startupLocale);
         AtomicReference<Consumer<String>> logSink = new AtomicReference<>(ignored -> {
@@ -81,8 +82,7 @@ final class CliApplication {
     }
 
     static int runCli(String[] args, Map<String, String> environment, Path workingDirectory,
-                      Locale startupLocale, java.io.OutputStream stdout,
-                      java.io.OutputStream stderr) {
+            Locale startupLocale, OutputStream stdout, OutputStream stderr) {
         Assembled assembled = assemble(environment, workingDirectory,
                 UserPaths.configDirectory(), startupLocale, null,
                 new ConsoleInputPrompter(startupLocale),
@@ -96,7 +96,7 @@ final class CliApplication {
 
     static int runShell(BootstrapSettings settings, Locale startupLocale,
                         Map<String, String> environment, Path workingDirectory,
-                        java.io.OutputStream stdout, java.io.OutputStream stderr) {
+            OutputStream stdout, OutputStream stderr) {
         JLineInputPrompter input = new JLineInputPrompter(startupLocale);
         JLineSecretInput secret = new JLineSecretInput(startupLocale);
         Path configDirectory = UserPaths.configDirectory();

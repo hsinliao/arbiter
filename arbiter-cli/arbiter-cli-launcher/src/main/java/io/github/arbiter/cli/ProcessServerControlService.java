@@ -20,6 +20,7 @@ import java.nio.file.StandardOpenOption;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 final class ProcessServerControlService implements ServerControlService {
@@ -138,7 +139,7 @@ final class ProcessServerControlService implements ServerControlService {
             throw new ServerControlException("err.server.control.unavailable");
         }
         boolean windows = System.getProperty("os.name", "")
-                .toLowerCase(java.util.Locale.ROOT).contains("win");
+                .toLowerCase(Locale.ROOT).contains("win");
         Path script = appHome.resolve("bin").resolve(name + (windows ? ".bat" : ""));
         if (!Files.isRegularFile(script)) {
             throw new ServerControlException("err.server.control.unavailable");

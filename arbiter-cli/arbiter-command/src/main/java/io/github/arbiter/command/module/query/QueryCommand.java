@@ -1,5 +1,7 @@
 package io.github.arbiter.command.module.query;
 
+import picocli.CommandLine.Model.CommandSpec;
+
 import io.github.arbiter.command.AbstractCommand;
 import io.github.arbiter.command.result.CommandResult;
 import io.github.arbiter.command.result.payload.QueryPayload;
@@ -16,7 +18,7 @@ import java.util.concurrent.Callable;
 @Command(name = "query", mixinStandardHelpOptions = true, resourceBundle = "messages")
 public final class QueryCommand extends AbstractCommand implements Callable<Integer> {
     @Spec
-    private picocli.CommandLine.Model.CommandSpec spec;
+    private CommandSpec spec;
 
     @Option(names = {"--name", "-n"}, required = false)
     private String name;
