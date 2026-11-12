@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>机器人助手 - Arbiter Console</title>
+    <link rel="stylesheet" href="/assets/console.css">
+</head>
+<body>
+<div class="shell">
+    <aside class="sidebar">
+        <div class="brand">Arbiter</div>
+        <a class="nav-link" data-nav="home" href="/home.html">首页</a>
+        <a class="nav-link" data-nav="assistant" href="/assistant.html">机器人助手</a>
+        <div data-admin-only>
+            <div class="nav-group">系统管理</div>
+            <a class="nav-link" data-nav="users" href="/system/users.html">用户管理</a>
+        </div>
+        <div class="sidebar-footer">
+            <button type="button" data-logout>退出登录</button>
+        </div>
+    </aside>
+
+    <div class="content">
+        <header class="topbar">
+            <div>
+                <h1>机器人助手</h1>
+                <div class="muted" id="assistantMode">正在读取助手配置...</div>
+            </div>
+            <div class="topbar-user">
+                <span data-user-name></span>
+                <span class="muted"> / </span>
+                <span data-user-scope></span>
+            </div>
+        </header>
+
+        <main class="page assistant-page">
+            <p class="alert error" id="assistantError" role="alert" hidden></p>
+
+            <div class="assistant-layout">
+                <section class="card conversation-panel">
+                    <div class="conversation-header">
+                        <div>
+                            <strong>只读运维助手</strong>
+                            <p class="muted">可以查询状态、健康、脱敏日志和内置 Runbook。</p>
+                        </div>
+                        <button class="button secondary small" type="button" id="newConversation">
+                            新会话
+                        </button>
+                    </div>
+
+                    <div class="message-list" id="messages" aria-live="polite">
+                        <article class="message assistant-message">
+                            <div class="message-role">助手</div>
+                            <div class="message-body">
+                                可以问我“服务现在正常吗”“最近有哪些错误”，或者询问操作步骤。
+                                我不会直接修改系统状态。
+                            </div>
+                        </article>
+                    </div>
+
+                    <form class="composer" id="assistantForm">
+                        <textarea id="assistantInput" rows="3" maxlength="8000"
+                                  placeholder="输入问题，Enter 发送，Shift+Enter 换行"
+                                  required></textarea>
+                        <div class="composer-actions">
+                            <span class="muted" id="assistantHint">正在检查助手状态...</span>
+                            <button class="button" type="submit" id="sendMessage" disabled>
+                                发送
+                            </button>
+                        </div>
+                    </form>
+                </section>
+
+                <aside class="card trace-panel">
+                    <div class="trace-header">
+                        <strong>运行过程</strong>
+                        <span class="badge off" id="runStatus">未开始</span>
+                    </div>
+                    <div class="trace-meta" id="traceMeta"></div>
+                    <div class="trace-list" id="traceList">
+                        <p class="muted">发送消息后，这里会显示工具调用和运行事件。</p>
+                    </div>
+                </aside>
+            </div>
+        </main>
+    </div>
+</div>
+
+<script src="/assets/console.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        ArbiterConsole.initShell('assistant');
+
+        const error = document.getElementById('assistantError');
+        const mode = document.getElementById('assistantMode');
+        const hint = document.getElementById('assistantHint');
+        const input = document.getElementById('assistantInput');
+        const send = document.getElementById('sendMessage');
+        const form = document.getElementById('assistantForm');
+        const messages = document.getElementById('messages');
+        const traceList = document.getElementById('traceList');
+        const traceMeta = document.getElementById('traceMeta');
+        const runStatus = document.getElementById('runStatus');
+        const newConversation = document.getElementById('newConversation');
+        let conversationId = null;
+        let available = false;
+        let polling = false;
+
+        const eventLabels = {
+            RUN_STARTED: '开始运行',
+            RUN_RESUMED: '恢复运行',
+            STATE_CHANGED: '状态变化',
+            MODEL_REQUEST: '请求模型',
+            MODEL_RESPONSE: '模型响应',
+            TOOL_REQUEST: '调用工具',
+            TOOL_RESULT: '工具结果',
+            CHECKPOINT_SAVED: '保存检查点',
+            MEMORY_RETRIEVED: '读取记忆',
+            BUDGET_EXCEEDED: '超出预算',
+            RUN_COMPLETED: '运行完成',
+            RUN_FAILED: '运行失败',
+            RUN_CANCELLED: '运行取消'
+        };
+
+        function clearError() {
+            error.hidden = true;
+        }
+
+        function appendMessage(role, text) {
+            const article = document.createElement('article');
+            article.className = 'message ' +
+                (role === 'user' ? 'user-message' : 'assistant-message');
+            const label = document.createElement('div');
+            label.className = 'message-role';
+            label.textContent = role === 'user' ? '你' : '助手';
+            const body = document.createElement('div');
+            body.className = 'message-body';
+            body.textContent = text;
+            article.append(label, body);
+            messages.appendChild(article);
+            article.scrollIntoView({block: 'end', behavior: 'smooth'});
+            return body;
+        }
+
+        function setStatus(status) {
+            runStatus.textContent = status;
+            runStatus.className = 'badge ' +
+                (status === 'SUCCEEDED' ? 'ok' : status === 'RUNNING' ? '' : 'off');
+        }
+
+        function eventDescription(event) {
+            const attributes = event.attributes || {};
+            if (event.type === 'TOOL_REQUEST' || event.type === 'TOOL_RESULT') {
+                return attributes.tool ? `工具：${attributes.tool}` : '';
+            }
+            if (event.type === 'MODEL_RESPONSE') {
+                const model = attributes.model || '未知模型';
+                const tokens = attributes.totalTokens;
+                return `${model}${tokens === undefined ? '' : `，累计 ${tokens} tokens`}`;
+            }
+            if (event.type === 'STATE_CHANGED') {
+                return attributes.state || '';
+            }
+            if (event.type === 'RUN_FAILED') {
+                return attributes.reason || '';
+            }
+            return '';
+        }
+
+        function renderTrace(run) {
+            traceList.replaceChildren();
+            const events = run.events || [];
+            if (events.length === 0) {
+                const waiting = document.createElement('p');
+                waiting.className = 'muted';
+                waiting.textContent = '等待运行事件...';
+                traceList.appendChild(waiting);
+            } else {
+                events.forEach(event => {
+                    const item = document.createElement('div');
+                    item.className = 'trace-item trace-' +
+                        String(event.type || '').toLowerCase();
+                    const title = document.createElement('div');
+                    title.className = 'trace-title';
+                    title.textContent = eventLabels[event.type] || event.type;
+                    const description = document.createElement('div');
+                    description.className = 'trace-description';
+                    description.textContent = eventDescription(event);
+                    item.append(title, description);
+                    traceList.appendChild(item);
+                });
+                traceList.scrollTop = traceList.scrollHeight;
+            }
+            const tokens = (run.inputTokens || 0) + (run.outputTokens || 0);
+            traceMeta.textContent =
+                `迭代 ${run.iterations || 0} 次 · ${tokens} tokens · 成本 ${run.cost || 0}`;
+        }
+
+        async function loadCapabilities() {
+            try {
+                const capabilities = await ArbiterConsole.api(
+                    'GET', '/agent/capabilities');
+                available = capabilities.enabled;
+                mode.textContent = available
+                    ? `只读模式 · ${capabilities.model}`
+                    : capabilities.message;
+                hint.textContent = available
+                    ? 'Enter 发送，Shift+Enter 换行'
+                    : '助手尚未配置';
+                input.disabled = !available;
+                send.disabled = !available;
+                if (capabilities.enabled) {
+                    input.focus();
+                }
+            } catch (failure) {
+                ArbiterConsole.showError(error, failure);
+            }
+        }
+
+        async function waitForRun(run) {
+            let current = run;
+            while ((current.status === 'QUEUED' || current.status === 'RUNNING') && polling) {
+                renderTrace(current);
+                await new Promise(resolve => setTimeout(resolve, 900));
+                current = await ArbiterConsole.api(
+                    'GET', `/agent/runs/${encodeURIComponent(current.runId)}`);
+            }
+            return current;
+        }
+
+        form.addEventListener('submit', async event => {
+            event.preventDefault();
+            if (!available || polling) {
+                return;
+            }
+            const message = input.value.trim();
+            if (!message) {
+                return;
+            }
+            clearError();
+            input.value = '';
+            appendMessage('user', message);
+            const answer = appendMessage('assistant', '正在处理...');
+            send.disabled = true;
+            input.disabled = true;
+            polling = true;
+            setStatus('RUNNING');
+            traceList.replaceChildren();
+            traceMeta.textContent = '';
+            try {
+                const started = await ArbiterConsole.api('POST', '/agent/runs', {
+                    message,
+                    conversationId
+                });
+                conversationId = started.conversationId;
+                const done = await waitForRun(started);
+                setStatus(done.status);
+                renderTrace(done);
+                answer.textContent = done.status === 'SUCCEEDED'
+                    ? (done.output || '任务已完成，但没有返回文本。')
+                    : (done.failure || '助手未能完成本次任务。');
+            } catch (failure) {
+                answer.textContent = '请求失败，请查看上方错误信息。';
+                setStatus('FAILED');
+                ArbiterConsole.showError(error, failure);
+            } finally {
+                polling = false;
+                send.disabled = !available;
+                input.disabled = !available;
+                input.focus();
+            }
+        });
+
+        input.addEventListener('keydown', event => {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                form.requestSubmit();
+            }
+        });
+
+        newConversation.addEventListener('click', () => {
+            if (polling) {
+                return;
+            }
+            conversationId = null;
+            messages.replaceChildren();
+            traceList.replaceChildren();
+            traceMeta.textContent = '';
+            setStatus('未开始');
+            appendMessage('assistant',
+                '新会话已开始。你可以继续询问服务状态、最近错误或操作步骤。');
+            input.focus();
+        });
+
+        loadCapabilities();
+    });
+</script>
+</body>
+</html>

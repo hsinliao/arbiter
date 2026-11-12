@@ -32,6 +32,11 @@ public final class ConsoleController {
         return "redirect:/system/users.html";
     }
 
+    @GetMapping("/assistant")
+    public String assistant() {
+        return "redirect:/assistant.html";
+    }
+
     @GetMapping("/console/config")
     @ResponseBody
     public Map<String, String> consoleConfig() {

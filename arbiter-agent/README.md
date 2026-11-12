@@ -36,7 +36,7 @@ arbiter-agent
 | --- | --- |
 | `core` | Task、Context、Config、Result、显式状态、事件和插件元数据注册表 |
 | `runtime` | ReAct Agent Loop、状态机、检查点恢复、模型/工具超时、重试、熔断、Token/成本预算 |
-| `llm` | LangChain4j 同步与原生流式适配器、成本/延迟/优先级路由、JSON 结构化输出提取 |
+| `llm` | Jackson 3 原生 OpenAI-compatible 客户端、成本/延迟/优先级路由、JSON 结构化输出提取 |
 | `memory` | 短期窗口、工作记忆、长期记忆、词法检索与向量余弦检索 |
 | `tool` | 工具注册、分组按需暴露、执行超时、描述质量校验和内置系统/文本工具 |
 | `plugin` | `@AgentPlugin`、ServiceLoader/JAR 加载、类加载器隔离和生命周期管理 |
@@ -47,7 +47,8 @@ SPI 2.0 将 `ModelRequest`/`ModelResponse` 等值对象设计为不可变 record
 
 ## 快速开始
 
-运行时只依赖抽象契约，模型接入可以是 LangChain4j、企业网关或其他实现：
+运行时只依赖抽象契约；内置客户端直接调用 OpenAI-compatible
+`/chat/completions`，也可以替换为企业网关或其他 `ModelClient` 实现：
 
 ```java
 ToolRegistry tools = new ToolRegistry();
@@ -55,7 +56,12 @@ tools.register(new ClockTool());
 
 RecordingEventStore events = new RecordingEventStore();
 RuntimeAgent agent = RuntimeAgent.builder()
-        .modelClient(new LangChainModelClient(chatModel))
+        .modelClient(new OpenAiCompatibleModelClient(
+                "https://api.openai.com/v1",
+                apiKey,
+                "your-model",
+                Duration.ofSeconds(5),
+                Duration.ofSeconds(60)))
         .toolRegistry(tools)
         .memory(new TieredMemory())
         .eventSink(events)

@@ -142,8 +142,26 @@ class BootContextTest {
                 .andExpect(status().isOk())
                 .andExpect(MockMvcResultMatchers
                         .jsonPath("$.apiPrefix").value("/api/v1"));
+        mvc.perform(request(HttpMethod.GET, "/assistant.html"))
+                .andExpect(status().isOk())
+                .andExpect(MockMvcResultMatchers
+                        .content().string(Matchers.containsString(
+                                "id=\"assistantForm\"")));
         mvc.perform(request(HttpMethod.GET, "/"))
                 .andExpect(status().is3xxRedirection());
+    }
+
+    @Test
+    void assistantCapabilitiesAreAuthenticatedAndDisabledByDefault()
+            throws Exception {
+        mvc.perform(request(HttpMethod.GET, "/api/v1/agent/capabilities"))
+                .andExpect(status().isUnauthorized());
+
+        String token = login();
+        mvc.perform(request(HttpMethod.GET, "/api/v1/agent/capabilities")
+                        .header(ApiHeaders.ARBITER_TOKEN, token))
+                .andExpect(status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.enabled").value(false));
     }
 
     @Test

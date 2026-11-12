@@ -5,6 +5,9 @@ import tools.jackson.databind.ObjectMapper;
 
 import io.github.arbiter.api.ApiHeaders;
 import io.github.arbiter.api.ApiRoutes;
+import io.github.arbiter.api.dto.AgentCapabilitiesResponse;
+import io.github.arbiter.api.dto.AgentRunRequest;
+import io.github.arbiter.api.dto.AgentRunResponse;
 import io.github.arbiter.api.uds.UdsRequest;
 import io.github.arbiter.api.uds.UdsResponse;
 import io.github.arbiter.server.auth.InMemoryUserRepository;
@@ -13,6 +16,7 @@ import io.github.arbiter.server.auth.MutableUserRepository;
 import io.github.arbiter.server.auth.TokenService;
 import io.github.arbiter.server.auth.UserAccount;
 import io.github.arbiter.server.config.ServerConfig;
+import io.github.arbiter.server.service.AgentAssistant;
 import io.github.arbiter.server.service.AuthService;
 import io.github.arbiter.server.service.QueryService;
 import io.github.arbiter.server.service.StatusService;
@@ -24,6 +28,7 @@ import java.time.Clock;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.math.BigDecimal;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -121,7 +126,40 @@ class UdsRequestDispatcherTest {
                 Map.of(ApiHeaders.ARBITER_TOKEN, token), null)).status());
     }
 
+    @Test
+    void assistantRoutesShareTheAgentServiceBoundary() throws Exception {
+        InMemoryUserRepository users = new InMemoryUserRepository(List.of(
+                UserAccount.create("alice", "alice-password", "reader", true)));
+        UdsRequestDispatcher dispatcher = dispatcher(users, new FakeAssistant());
+        String token = mapper.readTree(dispatcher.handle(new UdsRequest("POST",
+                "/api/v1" + ApiRoutes.LOGIN, Map.of(),
+                "{\"username\":\"alice\",\"password\":\"alice-password\"}"))
+                .body()).path("token").asText();
+        Map<String, String> headers = Map.of(ApiHeaders.ARBITER_TOKEN, token);
+
+        UdsResponse capabilities = dispatcher.handle(new UdsRequest("GET",
+                "/api/v1" + ApiRoutes.AGENT_CAPABILITIES, headers, null));
+        assertEquals(200, capabilities.status());
+        assertEquals(true, parse(capabilities).path("enabled").asBoolean());
+
+        UdsResponse submitted = dispatcher.handle(new UdsRequest("POST",
+                "/api/v1" + ApiRoutes.AGENT_RUNS, headers,
+                "{\"message\":\"status?\"}"));
+        assertEquals(202, submitted.status());
+        assertEquals("run-1", parse(submitted).path("runId").asText());
+
+        UdsResponse run = dispatcher.handle(new UdsRequest("GET",
+                "/api/v1" + ApiRoutes.AGENT_RUNS + "/run-1", headers, null));
+        assertEquals(200, run.status());
+        assertEquals("SUCCEEDED", parse(run).path("status").asText());
+    }
+
     private UdsRequestDispatcher dispatcher(MutableUserRepository users) {
+        return dispatcher(users, null);
+    }
+
+    private UdsRequestDispatcher dispatcher(
+            MutableUserRepository users, AgentAssistant assistant) {
         ServerConfig config = new ServerConfig(
                 "127.0.0.1", 0, "/api/v1", Duration.ofHours(1),
                 4096, 2, Duration.ofMinutes(1));
@@ -131,7 +169,7 @@ class UdsRequestDispatcherTest {
                 new LoginRateLimiter(config.loginMaxFailures(),
                         config.loginWindow(), clock));
         return new UdsRequestDispatcher(config, auth, new UserService(users),
-                new StatusService(clock), new QueryService());
+                new StatusService(clock), new QueryService(), assistant);
     }
 
     private JsonNode parse(UdsResponse response) {
@@ -139,6 +177,33 @@ class UdsRequestDispatcherTest {
             return mapper.readTree(response.body());
         } catch (Exception failure) {
             throw new AssertionError(failure);
+        }
+    }
+
+    private static final class FakeAssistant implements AgentAssistant {
+        @Override
+        public AgentCapabilitiesResponse capabilities() {
+            return new AgentCapabilitiesResponse(
+                    true, "test-model", "read-only", "ready");
+        }
+
+        @Override
+        public AgentRunResponse submit(
+                TokenService.TokenClaims claims, AgentRunRequest request) {
+            return response("RUNNING");
+        }
+
+        @Override
+        public AgentRunResponse get(
+                TokenService.TokenClaims claims, String runId) {
+            return response("SUCCEEDED");
+        }
+
+        private static AgentRunResponse response(String status) {
+            return new AgentRunResponse(
+                    "run-1", "conversation-1", status, "", "",
+                    "2026-11-12T00:00:00Z", null, 0, 0, 0,
+                    BigDecimal.ZERO, List.of());
         }
     }
 }

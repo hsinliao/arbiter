@@ -106,6 +106,7 @@
                 <include>io.github.arbiter:arbiter-agent-core</include>
                 <include>io.github.arbiter:arbiter-agent-llm</include>
                 <include>io.github.arbiter:arbiter-agent-memory</include>
+                <include>io.github.arbiter:arbiter-agent-observability</include>
                 <include>io.github.arbiter:arbiter-agent-plugin</include>
                 <include>io.github.arbiter:arbiter-agent-runtime</include>
                 <include>io.github.arbiter:arbiter-agent-spi</include>

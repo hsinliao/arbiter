@@ -19,6 +19,8 @@ public final class ServerKeyDerivation {
             "arbiter-user-store-v1".getBytes(StandardCharsets.US_ASCII);
     private static final byte[] TOKEN_SIGNING_INFO =
             "arbiter-token-signing-v1".getBytes(StandardCharsets.US_ASCII);
+    private static final byte[] AGENT_STATE_INFO =
+            "arbiter-agent-state-v1".getBytes(StandardCharsets.US_ASCII);
 
     private ServerKeyDerivation() {
     }
@@ -29,6 +31,10 @@ public final class ServerKeyDerivation {
 
     public static byte[] tokenSigning(byte[] masterKey) {
         return derive(masterKey, TOKEN_SIGNING_INFO);
+    }
+
+    public static byte[] agentState(byte[] masterKey) {
+        return derive(masterKey, AGENT_STATE_INFO);
     }
 
     private static byte[] derive(byte[] masterKey, byte[] info) {

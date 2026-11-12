@@ -21,6 +21,7 @@
         <dependency>
             <groupId>io.github.arbiter</groupId>
             <artifactId>arbiter-agent-llm</artifactId>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>io.github.arbiter</groupId>

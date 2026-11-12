@@ -63,6 +63,34 @@ public final class ConfigKeys {
                 "arbiter.server.login.max.failures";
         public static final String LOGIN_WINDOW_SECONDS =
                 "arbiter.server.login.window.seconds";
+        public static final class Agent {
+            public static final String ENABLED = "arbiter.agent.enabled";
+            public static final String BASE_URL = "arbiter.agent.base-url";
+            public static final String API_KEY = "arbiter.agent.api-key";
+            public static final String MODEL = "arbiter.agent.model";
+            public static final String SYSTEM_PROMPT = "arbiter.agent.system-prompt";
+            public static final String MAX_ITERATIONS = "arbiter.agent.max-iterations";
+            public static final String MAX_TOTAL_TOKENS =
+                    "arbiter.agent.max-total-tokens";
+            public static final String TIMEOUT = "arbiter.agent.timeout";
+            public static final String TOOL_GROUPS = "arbiter.agent.tool-groups";
+            public static final String MAX_RUNS_PER_MINUTE =
+                    "arbiter.agent.max-runs-per-minute";
+            public static final String DAILY_TOKEN_BUDGET =
+                    "arbiter.agent.daily-token-budget";
+            public static final String HISTORY_MESSAGES =
+                    "arbiter.agent.history-messages";
+            public static final String STORAGE_JDBC_URL =
+                    "arbiter.agent.storage-jdbc-url";
+            public static final String STORAGE_USERNAME =
+                    "arbiter.agent.storage-username";
+            public static final String STORAGE_PASSWORD =
+                    "arbiter.agent.storage-password";
+
+            private Agent() {
+            }
+        }
+
         public static final class Tls {
             public static final String ENABLED = "arbiter.server.tls.enabled";
             public static final String KEYSTORE_TYPE =

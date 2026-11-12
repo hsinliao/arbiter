@@ -70,6 +70,7 @@ The Spring Boot console serves a small browser UI on the HTTP listener:
 ```text
 http://127.0.0.1:8080/login.html          login
 http://127.0.0.1:8080/home.html           home and service status
+http://127.0.0.1:8080/assistant.html      read-only robot assistant
 http://127.0.0.1:8080/system/users.html   user management (admin only)
 ```
 
@@ -84,6 +85,63 @@ logs the login URL:
 ```text
 console: http://127.0.0.1:8080/login.html
 ```
+
+### Console assistant
+
+The Console includes an optional read-only robot assistant. It supports
+multi-turn conversations, asynchronous Agent runs, trace/tool-call display,
+and per-user run isolation. It is disabled until a model is configured in
+`conf/server.properties`:
+
+```properties
+arbiter.agent.enabled=true
+arbiter.agent.base-url=https://api.openai.com/v1
+arbiter.agent.api-key=your-server-side-secret
+arbiter.agent.model=your-model
+arbiter.agent.max-iterations=6
+arbiter.agent.max-total-tokens=20000
+arbiter.agent.timeout=60s
+arbiter.agent.tool-groups=system,reader,docs,admin
+arbiter.agent.max-runs-per-minute=12
+arbiter.agent.daily-token-budget=100000
+arbiter.agent.history-messages=20
+arbiter.agent.storage-jdbc-url=jdbc:h2:file:${arbiter.home}/data/agent;AUTO_SERVER=TRUE;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE
+arbiter.agent.storage-username=sa
+arbiter.agent.storage-password=
+```
+
+The API key is never returned by `/console/config` or the Agent API. The
+assistant currently exposes only read-only tools: service status and runtime
+health, the sample resource query, a bounded and redacted log tail, a bundled
+operations runbook, current time, and deterministic text transformation.
+
+The Console talks to an OpenAI-compatible `/chat/completions` endpoint through
+the native client in `arbiter-agent-llm`, serialized with Jackson 3. The whole
+reactor and distribution use one Jackson generation. The Jackson 2 annotations
+artifact remains only because Jackson 3 uses the
+`com.fasterxml.jackson.annotation` package for annotations.
+
+Conversation messages, run state, the durable work queue and trace events are
+stored in JDBC. The default uses a persistent H2 file under
+`<arbiter.home>/data`; multi-instance production can point the same settings at
+PostgreSQL. The Console API only validates and queues work. `AgentWorker`
+claims queued runs atomically, enforces one active run per conversation, and
+executes them with bounded concurrency. Reader accounts receive only system,
+reader and docs tool groups; health and log tools require the admin scope.
+Message content, prompts, outputs, failures and trace attributes are encrypted
+with a purpose-specific subkey derived from `conf/security/crypto.key`. Back up
+that key together with the Agent database; losing it makes stored conversations
+unreadable.
+
+The browser submits a question through `POST <api-prefix>/agent/runs`, receives
+an asynchronous run id, and polls `GET <api-prefix>/agent/runs/{runId}`. Each
+turn has a new task id while reusing the server-issued conversation id as the
+Agent memory/session id. Run and conversation ownership are checked against
+the authenticated token subject.
+
+The assistant does not perform state-changing tool calls. Requests to modify
+users or configuration produce an action plan for an administrator to confirm
+in the Console.
 
 ## Distribution layout
 
@@ -140,6 +198,8 @@ Classpath rules:
 - `lib/cli` holds the CLI modules and their CLI-only dependencies
   (Picocli/JLine).
 - `lib/arbiter-api.jar` at the `lib` root is the single shared contract JAR.
+- `lib/agent` holds the Agent runtime, Console assistant, and Agent module
+  JARs. The server launcher adds this directory to its classpath.
 - `lib/bootstrap/arbiter-console.jar` is the thin Spring Boot console JAR. Its
   Spring Boot, Spring, Tomcat, Jackson, and logging dependencies live in
   `lib/3rd`.
@@ -149,7 +209,7 @@ Classpath rules:
 - The CLI launcher pins exactly the JARs it needs and only reads
   `lib/3rd/jackson-*.jar` from the shared directory.
 - The server launcher uses only `arbiter-control.jar` for control commands, and
-  adds the console JAR, `lib/*`, and `lib/3rd/*` for normal
+  adds the console JAR, `lib/*`, `lib/agent/*`, and `lib/3rd/*` for normal
   `ArbiterServerApplication` startup.
 - Optional `tools/*` and `plugins/*` directories are appended when present; the
   distribution does not create them.
@@ -302,7 +362,7 @@ arbiter.server.tls.protocols=TLSv1.3,TLSv1.2
 | `ARBITER_JAVA_OPTS` | Additional JVM options for the CLI |
 | `ARBITER_SERVER_JAVA` | Explicit Java executable for the server |
 | `ARBITER_SERVER_JAVA_OPTS` | Additional JVM options for the server process only (not `--check`/`stop`) |
-| `ARBITER_SERVER_START_TIMEOUT` | Seconds to wait for startup, default `10` |
+| `ARBITER_SERVER_START_TIMEOUT` | Seconds to wait for startup, default `30` |
 | `ARBITER_DEBUG_LAUNCH` | Print resolved root, main JAR, classpath, and CLI JVM options |
 
 The launchers pass `-Darbiter.home=<root>`. Two JVM system properties are read:
@@ -668,6 +728,9 @@ The base URL and `/api/v1` prefix are centralized:
 | Create user | `POST /api/v1/users` | Yes, admin |
 | Update user | `PUT /api/v1/users/{username}` | Yes, admin |
 | Delete user | `DELETE /api/v1/users/{username}` | Yes, admin |
+| Assistant capabilities | `GET /api/v1/agent/capabilities` | Yes, reader/admin |
+| Start assistant run | `POST /api/v1/agent/runs` | Yes, reader/admin |
+| Get assistant run | `GET /api/v1/agent/runs/{runId}` | Yes, owner |
 
 Login request: `{"username":"alice","password":"server-password"}`. A successful
 response must contain a non-empty `token`; `expiresAt`, `username`, and `scope`
@@ -792,6 +855,17 @@ JAR plus `lib/3rd`, not a Boot executable JAR. Server settings are bound with
 startup goes to `ArbiterServerApplication`. `--stop` uses the Java 8 stop
 launcher. Lightweight control operations therefore bypass Spring startup.
 
+The optional robot assistant is a durable control-plane/worker composition.
+`AgentAssistantConfiguration` builds a JDBC state repository, one
+`RuntimeAgent`, a bounded executor and an `AgentWorker`; the worker claims
+queued runs with a database row lock. `AgentService` only validates and queues
+requests, while `AgentController` and `UdsRequestDispatcher` share that boundary.
+Conversation history, ownership, active-run checks, rate limits, token budgets,
+run results and trace events survive a Console restart. The default H2 mode is
+for a single host; PostgreSQL can be configured for multi-instance deployment.
+Model credentials are read only from `conf/server.properties`, and the
+assistant remains disabled by default.
+
 ## Development
 
 ### Build and test
@@ -827,11 +901,11 @@ On Windows use `scripts\build.bat`. Both are developer tools and are not part of
 the distribution. Set `ARBITER_MAVEN_REPO` to use a non-default Maven local
 repository.
 
-`mvn test` runs 135 tests covering API contracts, server routing and scopes,
-command parsing and rendering, configuration precedence, WireMock integration
-(token header, error mapping, retries, login persistence, whoami), TLS/mTLS
-validation, registry duplicate detection, help coverage, `ErrorCode` stability,
-and the framed Unix-socket transport.
+`mvn test` covers API contracts, server routing and scopes, Agent tools,
+asynchronous run ownership, command parsing and rendering, configuration
+precedence, WireMock integration (token header, error mapping, retries, login
+persistence, whoami), TLS/mTLS validation, registry duplicate detection, help
+coverage, `ErrorCode` stability, and the framed Unix-socket transport.
 
 Verification is always performed from the extracted `arbiter-<version>.tar.gz`,
 not from `arbiter-distribution/target`, so the tested layout matches the release.

@@ -63,7 +63,7 @@ if %ARBITER_JAVA_MAJOR% LSS 17 (
 set "ARBITER_SERVER_JAR=%ARBITER_HOME%\lib\bootstrap\arbiter-console.jar"
 set "ARBITER_CONTROL_JAR=%ARBITER_HOME%\lib\bootstrap\arbiter-control.jar"
 set "ARBITER_CONTROL_CLASSPATH=%ARBITER_CONTROL_JAR%"
-set "ARBITER_CLASSPATH=%ARBITER_CONTROL_JAR%;%ARBITER_HOME%\lib\bootstrap\arbiter-console.jar;%ARBITER_HOME%\lib\*;%ARBITER_HOME%\lib\3rd\*"
+set "ARBITER_CLASSPATH=%ARBITER_CONTROL_JAR%;%ARBITER_HOME%\lib\bootstrap\arbiter-console.jar;%ARBITER_HOME%\lib\*;%ARBITER_HOME%\lib\agent\*;%ARBITER_HOME%\lib\3rd\*"
 if exist "%ARBITER_HOME%\tools" set "ARBITER_CLASSPATH=%ARBITER_CLASSPATH%;%ARBITER_HOME%\tools\*;%ARBITER_HOME%\tools"
 if exist "%ARBITER_HOME%\plugins" set "ARBITER_CLASSPATH=%ARBITER_CLASSPATH%;%ARBITER_HOME%\plugins\*;%ARBITER_HOME%\plugins"
 
@@ -116,7 +116,7 @@ if not exist "%ARBITER_HOME%\lib\arbiter-api.jar" (
 )
 
 set "ARBITER_START_TIMEOUT=%ARBITER_SERVER_START_TIMEOUT%"
-if not defined ARBITER_START_TIMEOUT set "ARBITER_START_TIMEOUT=10"
+if not defined ARBITER_START_TIMEOUT set "ARBITER_START_TIMEOUT=30"
 set /a ARBITER_START_TIMEOUT_NUM=%ARBITER_START_TIMEOUT% 2>nul
 if not "%ARBITER_START_TIMEOUT_NUM%"=="%ARBITER_START_TIMEOUT%" (
   echo server-start: ARBITER_SERVER_START_TIMEOUT must be a positive integer 1>&2

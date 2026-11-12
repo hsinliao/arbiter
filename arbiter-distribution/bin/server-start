@@ -38,7 +38,7 @@ mkdir -p "$LOG_DIR"
 arbiter_select_java "${ARBITER_SERVER_JAVA:-}"
 
 ARBITER_CONTROL_CLASSPATH="$CONTROL_JAR"
-ARBITER_CLASSPATH="$ARBITER_HOME/conf:$CONTROL_JAR:$SERVER_JAR:$ARBITER_HOME/lib/*:$ARBITER_HOME/lib/3rd/*"
+ARBITER_CLASSPATH="$ARBITER_HOME/conf:$CONTROL_JAR:$SERVER_JAR:$ARBITER_HOME/lib/*:$ARBITER_HOME/lib/agent/*:$ARBITER_HOME/lib/3rd/*"
 for dir in tools plugins; do
   if [ -d "$ARBITER_HOME/$dir" ]; then
     ARBITER_CLASSPATH="$ARBITER_CLASSPATH:$ARBITER_HOME/$dir/*:$ARBITER_HOME/$dir"
@@ -83,7 +83,7 @@ arbiter_require_file "$SERVER_JAR"
 arbiter_require_file "$ARBITER_HOME/lib/arbiter-api.jar"
 arbiter_require_file "$ARBITER_HOME/conf/logback.xml"
 
-START_TIMEOUT=${ARBITER_SERVER_START_TIMEOUT:-10}
+START_TIMEOUT=${ARBITER_SERVER_START_TIMEOUT:-30}
 case $START_TIMEOUT in
   ''|*[!0-9]*)
     arbiter_fail "ARBITER_SERVER_START_TIMEOUT must be a positive integer"

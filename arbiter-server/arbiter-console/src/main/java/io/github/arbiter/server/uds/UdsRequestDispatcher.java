@@ -8,6 +8,7 @@ import io.github.arbiter.api.ApiErrorCodes;
 import io.github.arbiter.api.ApiHeaders;
 import io.github.arbiter.api.ApiRoutes;
 import io.github.arbiter.api.dto.ApiErrorResponse;
+import io.github.arbiter.api.dto.AgentRunRequest;
 import io.github.arbiter.api.dto.LoginRequest;
 import io.github.arbiter.api.dto.UserCreateRequest;
 import io.github.arbiter.api.dto.UserUpdateRequest;
@@ -17,11 +18,13 @@ import io.github.arbiter.server.auth.TokenService.TokenClaims;
 import io.github.arbiter.server.config.ServerConfig;
 import io.github.arbiter.server.error.ApiException;
 import io.github.arbiter.server.service.AuthService;
+import io.github.arbiter.server.service.AgentAssistant;
 import io.github.arbiter.server.service.QueryService;
 import io.github.arbiter.server.service.StatusService;
 import io.github.arbiter.server.service.UserService;
 
 import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
@@ -42,17 +45,26 @@ public final class UdsRequestDispatcher {
     private final UserService userService;
     private final StatusService statusService;
     private final QueryService queryService;
+    private final AgentAssistant agentAssistant;
     private final ObjectMapper mapper = new ObjectMapper();
 
     public UdsRequestDispatcher(ServerConfig config, AuthService authService,
                                 UserService userService, StatusService statusService,
                                 QueryService queryService) {
+        this(config, authService, userService, statusService, queryService, null);
+    }
+
+    @Autowired
+    public UdsRequestDispatcher(ServerConfig config, AuthService authService,
+                                UserService userService, StatusService statusService,
+                                QueryService queryService, AgentAssistant agentAssistant) {
         this.config = config;
         this.maxRequestBytes = config.maxRequestBytes();
         this.authService = authService;
         this.userService = userService;
         this.statusService = statusService;
         this.queryService = queryService;
+        this.agentAssistant = agentAssistant;
     }
 
     public UdsResponse handle(UdsRequest request) {
@@ -78,6 +90,25 @@ public final class UdsRequestDispatcher {
                 requireMethod(method, "GET");
                 authenticate(request, "reader", "admin");
                 return json(200, queryService.query(queryName(request.path())));
+            }
+            if (ApiRoutes.AGENT_CAPABILITIES.equals(route)) {
+                requireMethod(method, "GET");
+                authenticate(request, "reader", "admin");
+                return json(200, requireAgentAssistant().capabilities());
+            }
+            if (ApiRoutes.AGENT_RUNS.equals(route)) {
+                requireMethod(method, "POST");
+                TokenClaims claims = authenticate(request, "reader", "admin");
+                return json(202, requireAgentAssistant().submit(
+                        claims, body(request, AgentRunRequest.class)));
+            }
+            if (route.startsWith(ApiRoutes.AGENT_RUNS + "/")) {
+                requireMethod(method, "GET");
+                TokenClaims claims = authenticate(request, "reader", "admin");
+                String runId = URLDecoder.decode(
+                        route.substring(ApiRoutes.AGENT_RUNS.length() + 1),
+                        StandardCharsets.UTF_8);
+                return json(200, requireAgentAssistant().get(claims, runId));
             }
             if (ApiRoutes.USERS.equals(route)) {
                 authenticate(request, "admin");
@@ -226,6 +257,14 @@ public final class UdsRequestDispatcher {
                     "HTTP method is not allowed for this endpoint.",
                     Map.of("Allow", expected));
         }
+    }
+
+    private AgentAssistant requireAgentAssistant() {
+        if (agentAssistant == null) {
+            throw new ApiException(503, ApiErrorCodes.AGENT_UNAVAILABLE,
+                    "The Console assistant is not configured.");
+        }
+        return agentAssistant;
     }
 
     private static Map<String, List<String>> queryParameters(String requestPath) {

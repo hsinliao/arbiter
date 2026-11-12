@@ -13,6 +13,9 @@ public final class ApiErrorCodes {
     public static final String METHOD_NOT_ALLOWED = "METHOD_NOT_ALLOWED";
     public static final String NOT_FOUND = "NOT_FOUND";
     public static final String CONFLICT = "CONFLICT";
+    public static final String AGENT_UNAVAILABLE = "AGENT_UNAVAILABLE";
+    public static final String AGENT_BUSY = "AGENT_BUSY";
+    public static final String AGENT_BUDGET_EXCEEDED = "AGENT_BUDGET_EXCEEDED";
     public static final String INTERNAL_ERROR = "INTERNAL_ERROR";
 
     private ApiErrorCodes() {

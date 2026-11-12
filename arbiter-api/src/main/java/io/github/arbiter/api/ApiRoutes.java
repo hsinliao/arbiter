@@ -11,6 +11,8 @@ public final class ApiRoutes {
     public static final String STATUS = "/status";
     public static final String QUERY = "/query";
     public static final String USERS = "/users";
+    public static final String AGENT_CAPABILITIES = "/agent/capabilities";
+    public static final String AGENT_RUNS = "/agent/runs";
 
     private ApiRoutes() {
     }

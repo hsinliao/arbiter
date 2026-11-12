@@ -15,6 +15,8 @@
 
     <properties>
         <spring-boot.version>4.1.2</spring-boot.version>
+        <h2.version>2.3.232</h2.version>
+        <postgresql.version>42.7.8</postgresql.version>
     </properties>
 
     <dependencyManagement>
@@ -40,6 +42,11 @@
             <artifactId>arbiter-control</artifactId>
         </dependency>
         <dependency>
+            <groupId>io.github.arbiter</groupId>
+            <artifactId>arbiter-agent-runtime</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webmvc</artifactId>
         </dependency>
@@ -48,9 +55,26 @@
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <version>${h2.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>${postgresql.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.github.arbiter</groupId>
+            <artifactId>arbiter-agent-llm</artifactId>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -93,8 +117,8 @@
                         <configuration>
                             <outputDirectory>${project.build.directory}/console-libs</outputDirectory>
                             <includeScope>runtime</includeScope>
-                            <stripVersion>true</stripVersion>
-                            <excludeArtifactIds>arbiter-api,arbiter-control</excludeArtifactIds>
+                            <stripVersion>false</stripVersion>
+                            <excludeArtifactIds>arbiter-api,arbiter-control,arbiter-agent-core,arbiter-agent-llm,arbiter-agent-memory,arbiter-agent-observability,arbiter-agent-plugin,arbiter-agent-runtime,arbiter-agent-spi,arbiter-agent-tool</excludeArtifactIds>
                         </configuration>
                     </execution>
                 </executions>
